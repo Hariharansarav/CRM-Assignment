@@ -1,66 +1,71 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import auth from '../../utils/auth';
-import crmLogo from '../../assets/CRM.png';
 
+/**
+ * Navigation items strictly based on project pages:
+ * 1. Dashboard (/dashboard)
+ * 2. Leads (/leads)
+ * 3. Customers (/customers)
+ * 4. Opportunities (/opportunities)
+ * (No extra elements like Settings or Support per requirements)
+ */
 const NAV_ITEMS = [
   {
     to: '/dashboard',
     label: 'Dashboard',
+    // 4-square / 2x2 grid icon matching reference Image 1
     icon: (props) => (
-      <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="9" rx="1.5" />
-        <rect x="14" y="3" width="7" height="5" rx="1.5" />
-        <rect x="14" y="12" width="7" height="9" rx="1.5" />
-        <rect x="3" y="16" width="7" height="5" rx="1.5" />
-      </svg>
-    ),
-  },
-  {
-    to: '/customers',
-    label: 'Customers',
-    icon: (props) => (
-      <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <svg {...props} viewBox="0 0 24 24" fill="currentColor">
+        <rect x="3" y="3" width="7.5" height="7.5" rx="1.75" />
+        <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.75" />
+        <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.75" />
+        <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.75" />
       </svg>
     ),
   },
   {
     to: '/leads',
     label: 'Leads',
+    // Paper airplane / send icon matching reference Image 1
     icon: (props) => (
       <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <circle cx="12" cy="12" r="6" />
-        <circle cx="12" cy="12" r="2" />
+        <path d="M22 2L11 13" />
+        <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+      </svg>
+    ),
+  },
+  {
+    to: '/customers',
+    label: 'Customers',
+    // Wallet / purse icon matching reference Image 1
+    icon: (props) => (
+      <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+        <path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z" />
+        <circle cx="16" cy="14" r="1" fill="currentColor" />
       </svg>
     ),
   },
   {
     to: '/opportunities',
     label: 'Opportunities',
+    // Line chart with baseline and dots matching reference Image 1
     icon: (props) => (
       <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+        <path d="M3 20h18" />
+        <path d="M4 16l6-6 4 4 6-8" />
+        <circle cx="4" cy="16" r="1.5" fill="currentColor" />
+        <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+        <circle cx="14" cy="14" r="1.5" fill="currentColor" />
+        <circle cx="20" cy="6" r="1.5" fill="currentColor" />
       </svg>
     ),
   },
 ];
 
-/**
- * Phase 3 Slim Icon Sidebar Component
- * Features:
- * - Desktop: Compact 72px–80px icon-first vertical navigation with floating hover tooltips
- * - Mobile: Expands into full off-canvas drawer with Icon + Label
- * - Active state: Emerald highlight indicator matching Login page visual identity
- * - Admin profile avatar & client-side Logout flow
- */
 const Sidebar = ({ onClose, isMobile = false }) => {
   const navigate = useNavigate();
-  const user = auth.getUser();
+  const location = useLocation();
 
   const handleLogout = () => {
     auth.logout();
@@ -68,26 +73,41 @@ const Sidebar = ({ onClose, isMobile = false }) => {
     navigate('/login', { replace: true });
   };
 
-  // MOBILE DRAWER VIEW (Icon + Label)
+  // Active check helper that also accounts for nested routes like /customers/:id
+  const isItemActive = (to) => {
+    if (to === '/dashboard') return location.pathname === '/dashboard';
+    if (to === '/customers') return location.pathname.startsWith('/customers');
+    return location.pathname === to;
+  };
+
+  // =========================================================================
+  // MOBILE OFF-CANVAS DRAWER VIEW (<768px)
+  // =========================================================================
   if (isMobile) {
     return (
-      <aside className="h-full flex flex-col justify-between bg-white select-none">
+      <aside className="h-full flex flex-col justify-between bg-[#11161b] text-white select-none">
         <div>
-          {/* Brand Header */}
-          <div className="h-16 px-6 flex items-center justify-between border-b border-slate-100">
+          {/* Mobile Header: Logo & Title */}
+          <div className="h-16 px-5 flex items-center justify-between border-b border-slate-800/80">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-green-500 p-1.5 flex items-center justify-center shadow-md shadow-emerald-600/15 shrink-0">
-                <img
-                  src={crmLogo}
-                  alt="Mini Sales CRM Logo"
-                  className="w-full h-full object-contain"
-                />
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                  <defs>
+                    <linearGradient id="mobile-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#34d399" />
+                      <stop offset="60%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="15" cy="15" r="9" stroke="url(#mobile-logo-gradient)" strokeWidth="3.5" strokeLinecap="round" />
+                  <path d="M21.5 21.5L26 26" stroke="url(#mobile-logo-gradient)" strokeWidth="3.5" strokeLinecap="round" />
+                </svg>
               </div>
               <div>
-                <span className="font-bold text-slate-900 text-base tracking-tight block leading-tight font-sans">
+                <span className="font-bold text-white text-sm tracking-tight block leading-tight font-sans">
                   Mini Sales CRM
                 </span>
-                <span className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider block">
+                <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider block">
                   Sales Workspace
                 </span>
               </div>
@@ -96,7 +116,7 @@ const Sidebar = ({ onClose, isMobile = false }) => {
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors focus:outline-none cursor-pointer"
               aria-label="Close navigation menu"
             >
               <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
@@ -109,15 +129,16 @@ const Sidebar = ({ onClose, isMobile = false }) => {
             </button>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Items (Project Pages Only) */}
           <div className="p-4 space-y-1">
             <div className="px-3 pb-2 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
               Navigation
             </div>
 
-            <nav className="space-y-1">
+            <nav className="space-y-1.5" aria-label="Mobile Navigation">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
+                const active = isItemActive(item.to);
                 return (
                   <NavLink
                     key={item.to}
@@ -125,30 +146,26 @@ const Sidebar = ({ onClose, isMobile = false }) => {
                     onClick={() => {
                       if (onClose) onClose();
                     }}
-                    className={({ isActive }) =>
-                      `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                        isActive
-                          ? 'bg-emerald-50 text-emerald-800 font-semibold shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
-                      }`
-                    }
+                    className={`group flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium transition-all ${
+                      active
+                        ? 'bg-white text-slate-950 font-bold shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    }`}
                   >
-                    {({ isActive }) => (
-                      <>
-                        <div className="flex items-center gap-3">
-                          <Icon
-                            className={`w-5 h-5 shrink-0 transition-colors ${
-                              isActive
-                                ? 'text-emerald-600'
-                                : 'text-slate-400 group-hover:text-slate-600'
-                            }`}
-                          />
-                          <span>{item.label}</span>
-                        </div>
-                        {isActive && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0"></span>
-                        )}
-                      </>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+                          active
+                            ? 'text-slate-950'
+                            : 'text-slate-400 group-hover:text-white'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                      </div>
+                      <span>{item.label}</span>
+                    </div>
+                    {active && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                     )}
                   </NavLink>
                 );
@@ -157,30 +174,13 @@ const Sidebar = ({ onClose, isMobile = false }) => {
           </div>
         </div>
 
-        {/* Bottom User Card & Logout */}
-        <div className="p-4 border-t border-slate-100 space-y-3">
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/90 border border-slate-200/70">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-green-500 text-white font-bold text-xs flex items-center justify-center shadow-xs shrink-0">
-                A
-              </div>
-              <div className="overflow-hidden">
-                <div className="text-xs font-semibold text-slate-900 truncate">
-                  {user?.name || 'Admin'}
-                </div>
-                <div className="text-[10px] text-slate-500 truncate flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
-                  <span>{user?.role || 'Administrator'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        {/* Mobile Bottom: Logout */}
+        <div className="p-4 border-t border-slate-800/80">
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200/60 transition-all cursor-pointer focus:outline-none"
-            aria-label="Log out"
+            className="w-full flex items-center justify-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer focus:outline-none"
+            aria-label="Logout"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -194,101 +194,143 @@ const Sidebar = ({ onClose, isMobile = false }) => {
     );
   }
 
-  // DESKTOP SLIM ICON-FIRST VIEW (64px–80px with animated tooltips)
+  // =========================================================================
+  // DESKTOP DOCK VIEW (Matching Reference Image 1 & Prompt Spec)
+  // - Dark neutral charcoal dock (#11161b)
+  // - Top: Stylized App Logo with emerald theme accent
+  // - Navigation: Project pages only (Dashboard, Leads, Customers, Opportunities)
+  // - Active Item: Curved white tab that bulges into the sidebar and seamlessly
+  //   merges with the main white content area via inverse vector curves
+  // - Subtle horizontal divider
+  // - Bottom: Logout icon only
+  // =========================================================================
   return (
-    <aside className="w-full h-full flex flex-col justify-between items-center py-4 bg-white select-none relative z-30">
-      {/* Top: Mini Sales CRM Logo & Navigation Icons */}
-      <div className="flex flex-col items-center w-full space-y-6">
-        {/* Brand Logo with Tooltip */}
-        <div className="relative group flex items-center justify-center">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-green-500 p-2 flex items-center justify-center shadow-md shadow-emerald-600/20 cursor-pointer transition-transform duration-200 group-hover:scale-105">
-            <img
-              src={crmLogo}
-              alt="Mini Sales CRM Logo"
-              className="w-full h-full object-contain"
-            />
-          </div>
+    <aside
+      className="w-full h-full flex flex-col justify-between items-center py-6 bg-[#11161b] select-none relative z-30"
+      aria-label="Sidebar Navigation"
+    >
+      {/* TOP SECTION: Logo + Navigation Items */}
+      <div className="flex flex-col items-center w-full">
+        {/* App Logo (Top) */}
+        <div className="relative group flex items-center justify-center mb-7">
+          <Link
+            to="/dashboard"
+            aria-label="Mini Sales CRM Dashboard"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+          >
+            {/* Stylized Logo with Login Theme Accent (Emerald Gradient) */}
+            <svg className="w-7 h-7 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" viewBox="0 0 32 32" fill="none">
+              <defs>
+                <linearGradient id="sidebar-logo-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#34d399" />
+                  <stop offset="50%" stopColor="#10b981" />
+                  <stop offset="100%" stopColor="#059669" />
+                </linearGradient>
+              </defs>
+              <circle
+                cx="15"
+                cy="15"
+                r="9"
+                stroke="url(#sidebar-logo-emerald)"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              />
+              <path
+                d="M21.5 21.5L26 26"
+                stroke="url(#sidebar-logo-emerald)"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </Link>
 
           {/* Logo Tooltip */}
-          <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold shadow-xl whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-150 pointer-events-none origin-left flex items-center gap-1.5 border border-slate-800">
+          <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold shadow-xl whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-150 pointer-events-none origin-left flex items-center gap-2 border border-slate-800">
             <span>Mini Sales CRM</span>
-            <span className="text-[10px] text-emerald-400 font-normal">v3.0</span>
+            <span className="text-[10px] text-emerald-400 font-medium px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">
+              Workspace
+            </span>
             <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-900" />
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="w-8 h-px bg-slate-100" />
-
-        {/* Navigation Icon Group */}
-        <nav className="flex flex-col items-center space-y-3 w-full px-2">
+        {/* Navigation Items Group */}
+        <nav className="flex flex-col items-center w-full space-y-2" aria-label="Main Navigation">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
+            const active = isItemActive(item.to);
+
             return (
-              <div key={item.to} className="relative group flex items-center justify-center w-full">
+              <div key={item.to} className="relative group w-full flex items-center">
                 <NavLink
                   to={item.to}
                   aria-label={item.label}
-                  className={({ isActive }) =>
-                    `w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 relative ${
-                      isActive
-                        ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25 scale-100'
-                        : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-                    }`
-                  }
+                  className={`relative w-full h-12 flex items-center justify-center transition-colors duration-150 cursor-pointer focus:outline-none ${
+                    active
+                      ? 'text-slate-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
                 >
-                  {({ isActive }) => (
-                    <>
-                      <Icon className="w-5 h-5 transition-transform duration-200 group-hover:scale-105" />
-                      {/* Active Indicator Pip */}
-                      {isActive && (
-                        <span className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-5 bg-emerald-600 rounded-r-full"></span>
-                      )}
-                    </>
+                  {/* Active Background Curved Tab */}
+                  {active && (
+                    <div
+                      className="absolute top-0 right-0 h-full w-[60px] bg-white rounded-l-[24px] z-0 shadow-[-4px_0_12px_rgba(0,0,0,0.06)]"
+                      aria-hidden="true"
+                    >
+                      {/* Top Inverted Corner: Smooth concave transition from dark sidebar to white tab */}
+                      <svg
+                        className="absolute -top-5 right-0 w-5 h-5 pointer-events-none text-white fill-current"
+                        viewBox="0 0 20 20"
+                        aria-hidden="true"
+                      >
+                        <path d="M20 0 V20 H0 C11.0457 20 20 11.0457 20 0 Z" />
+                      </svg>
+
+                      {/* Bottom Inverted Corner: Smooth concave transition from white tab back to dark sidebar */}
+                      <svg
+                        className="absolute -bottom-5 right-0 w-5 h-5 pointer-events-none text-white fill-current"
+                        viewBox="0 0 20 20"
+                        aria-hidden="true"
+                      >
+                        <path d="M20 20 V0 H0 C11.0457 0 20 8.9543 20 20 Z" />
+                      </svg>
+                    </div>
                   )}
+
+                  {/* Icon (Vertically & horizontally aligned down the sidebar axis) */}
+                  <span className={`relative z-10 transition-transform duration-150 ${active ? 'scale-105' : 'group-hover:scale-110'}`}>
+                    <Icon className="w-5 h-5" />
+                  </span>
                 </NavLink>
 
-                {/* Floating Hover Tooltip */}
-                <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold shadow-xl whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-150 pointer-events-none origin-left flex items-center gap-2 border border-slate-800">
+                {/* Floating Tooltip (Desktop) */}
+                <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold shadow-xl whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-150 pointer-events-none origin-left flex items-center border border-slate-800">
                   <span>{item.label}</span>
-                  <span className="text-emerald-400 text-xs">→</span>
                   <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-900" />
                 </div>
               </div>
             );
           })}
+
+          {/* Subtle Divider (Matching Reference Image 1 & Prompt Spec) */}
+          <div className="pt-2 pb-1 w-full flex justify-center">
+            <div className="w-6 h-[1.5px] bg-slate-800/90 rounded-full" />
+          </div>
         </nav>
       </div>
 
-      {/* Bottom: Admin User Avatar & Logout Button */}
-      <div className="flex flex-col items-center space-y-3 w-full px-2 pt-4 border-t border-slate-100">
-        {/* Admin Avatar with Tooltip */}
-        <div className="relative group flex items-center justify-center">
-          <div
-            className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-green-500 text-white font-bold text-xs flex items-center justify-center shadow-xs cursor-default ring-2 ring-white hover:ring-emerald-200 transition-all"
-            title="Admin User"
-          >
-            A
-          </div>
-
-          {/* Admin Tooltip */}
-          <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs shadow-xl whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-150 pointer-events-none origin-left border border-slate-800">
-            <div className="font-semibold text-white">{user?.name || 'Admin'}</div>
-            <div className="text-[10px] text-emerald-400">{user?.role || 'Administrator'}</div>
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-900" />
-          </div>
-        </div>
-
-        {/* Logout Icon Button with Tooltip */}
-        <div className="relative group flex items-center justify-center">
+      {/* BOTTOM SECTION: Logout Action */}
+      <div className="w-full flex flex-col items-center">
+        <div className="relative group w-full flex items-center justify-center">
           <button
             type="button"
             onClick={handleLogout}
-            aria-label="Log out"
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors focus:outline-none cursor-pointer"
+            aria-label="Logout"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors focus:outline-none cursor-pointer"
           >
+            {/* Logout Exit Icon matching Reference Image 1 */}
             <svg
-              className="w-4 h-4"
+              className="w-5 h-5 transition-transform duration-150 group-hover:scale-110"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -303,8 +345,8 @@ const Sidebar = ({ onClose, isMobile = false }) => {
           </button>
 
           {/* Logout Tooltip */}
-          <div className="absolute left-full ml-3 px-2.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold shadow-xl whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-150 pointer-events-none origin-left border border-slate-800">
-            <span className="text-red-400">Log Out</span>
+          <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-semibold shadow-xl whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-150 pointer-events-none origin-left border border-slate-800">
+            <span className="text-rose-400 font-medium">Log Out</span>
             <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-900" />
           </div>
         </div>

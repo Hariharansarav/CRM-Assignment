@@ -1,165 +1,299 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import customerService from '../services/customerService';
+import activityService from '../services/activityService';
+import CustomerProfile from '../components/customer-details/CustomerProfile';
+import CustomerSummary from '../components/customer-details/CustomerSummary';
+import RelatedOpportunities from '../components/customer-details/RelatedOpportunities';
+import ActivityTimeline from '../components/customer-details/ActivityTimeline';
+import AddActivityModal from '../components/customer-details/AddActivityModal';
+import CustomerToast from '../components/customers/CustomerToast';
 
 /**
- * Phase 3 Customer Details Placeholder Page
- * Features:
- * - Dynamic route handling with useParams() to display the current customer ID
- * - Profile summary card with name, company, status pill, and assigned rep
- * - Multi-card layout: Customer Overview, Associated Deals, and Activity Timeline
- * - Back to Customers navigation
- * - Strictly matches Login page theme (white cards, subtle borders, emerald accents)
+ * CustomerDetails Page (Phase 6)
+ * Renders complete profile, associated pipeline opportunities, and chronological activity timeline
+ * for a single customer identified by the :id route parameter.
  */
-const CustomerDetails = () => {
+export const CustomerDetails = () => {
   const { id } = useParams();
 
-  // Mock customer info for layout visualization
-  const customerName = id === '25' ? 'Global Tech Innovations' : 'Acme Corporation';
-  const customerCompany = id === '25' ? 'Fintech & Blockchain' : 'Enterprise SaaS & Cloud';
-  const contactName = id === '25' ? 'Rahul Kumar' : 'John Doe';
-  const contactEmail = id === '25' ? 'rahul.k@globaltech.io' : 'john.doe@acmecorp.com';
-  const lifetimeValue = id === '25' ? '$78,200' : '$54,000';
+  // Validate ID format upfront
+  const isValidId = Boolean(id && Number.isInteger(Number(id)) && Number(id) > 0);
 
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+
+  // Add Activity modal state
+  const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
+
+  // Toast feedback state
+  const [toast, setToast] = useState(null);
+
+  // Refresh counter to re-fetch when user retries
+  const [refreshCount, setRefreshCount] = useState(0);
+
+  useEffect(() => {
+    if (!isValidId) return;
+
+    let isMounted = true;
+
+    const loadCustomerData = async () => {
+      try {
+        const result = await customerService.getCustomerById(id);
+        if (isMounted) {
+          setData(result);
+          setError(null);
+          setNotFound(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          if (err.status === 404) {
+            setNotFound(true);
+          } else {
+            setError(err.message || 'Unable to load customer details. Please try again.');
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCustomerData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, isValidId, refreshCount]);
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    setNotFound(false);
+    setRefreshCount((c) => c + 1);
+  };
+
+  // Add Activity submission handler
+  const handleAddActivity = async (activityPayload) => {
+    const newActivity = await activityService.createActivity(id, activityPayload);
+
+    // Update activities list in local state immediately
+    setData((prev) => {
+      if (!prev) return prev;
+      const currentActivities = prev.activities || [];
+      return {
+        ...prev,
+        activities: [newActivity, ...currentActivities],
+      };
+    });
+
+    setToast({ message: 'Activity added successfully.', type: 'success' });
+  };
+
+  // =========================================================================
+  // 1. INVALID ID OR NOT FOUND (404) STATE
+  // =========================================================================
+  if (!isValidId || notFound) {
+    return (
+      <div className="w-full max-w-xl mx-auto py-12 px-4 text-center select-none">
+        <div className="rounded-2xl bg-white border border-slate-200/80 p-8 sm:p-10 shadow-2xs">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 mb-1">
+            Customer Not Found
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mb-6 max-w-sm mx-auto">
+            The customer account you are looking for (ID #{id}) does not exist or may have been removed.
+          </p>
+          <Link
+            to="/customers"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1b2126] hover:bg-black text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer"
+          >
+            <span>←</span>
+            <span>Back to Customers</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 2. SKELETON LOADING STATE
+  // =========================================================================
+  if (loading) {
+    return (
+      <div className="w-full max-w-7xl mx-auto space-y-4 pb-12 animate-pulse min-w-0 select-none">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between gap-3 py-1">
+          <div className="w-36 h-6 bg-slate-200 rounded-xl" />
+          <div className="w-28 h-6 bg-slate-200 rounded-xl" />
+        </div>
+
+        {/* Profile Card Skeleton */}
+        <div className="rounded-2xl bg-white border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 bg-slate-200 rounded-2xl shrink-0" />
+            <div className="space-y-1.5 flex-1">
+              <div className="w-40 h-5 bg-slate-200 rounded-lg" />
+              <div className="w-24 h-3.5 bg-slate-100 rounded-md" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="h-14 bg-slate-50 rounded-xl border border-slate-100" />
+            <div className="h-14 bg-slate-50 rounded-xl border border-slate-100" />
+            <div className="h-14 bg-slate-50 rounded-xl border border-slate-100" />
+          </div>
+        </div>
+
+        {/* Summary Metrics Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="h-20 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs" />
+          <div className="h-20 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs" />
+          <div className="h-20 bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs" />
+        </div>
+
+        {/* Opportunities and Activities Row Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-6 h-64 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs" />
+          <div className="lg:col-span-6 h-64 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs" />
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 3. SERVER ERROR STATE WITH RETRY
+  // =========================================================================
+  if (error) {
+    return (
+      <div className="w-full max-w-xl mx-auto py-12 px-4 text-center select-none">
+        <div className="rounded-2xl bg-white border border-rose-200 p-8 sm:p-10 shadow-2xs">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 mb-1">
+            Unable to load customer details
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mb-6 max-w-sm mx-auto">
+            {error}
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              to="/customers"
+              className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            >
+              Back to Customers
+            </Link>
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
+              <span>Try Again</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const customer = data?.customer;
+  const opportunities = data?.opportunities || [];
+  const activities = data?.activities || [];
+  const totalOpportunityValue = data?.totalOpportunityValue ?? 0;
+
+  // =========================================================================
+  // 4. MAIN CUSTOMER DETAILS CONTENT
+  // =========================================================================
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* 1. Header with Breadcrumb & Back Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-            <Link to="/customers" className="hover:text-emerald-700 transition-colors">
-              Customers
+    <div className="w-full max-w-7xl mx-auto space-y-4 pb-12 min-w-0">
+      {/* Navigation Header / Breadcrumbs */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-200/60 min-w-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs text-slate-500 mb-0.5">
+            <Link
+              to="/customers"
+              className="hover:text-emerald-700 font-medium transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <span>←</span>
+              <span>Back to Customers</span>
             </Link>
             <span>/</span>
-            <span className="text-slate-900 font-semibold font-mono">ID #{id}</span>
+            <span className="text-slate-800 font-mono font-semibold">ID #{id}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight font-sans">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans truncate">
             Customer Details
           </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">
+            View customer information, opportunities and activity history.
+          </p>
         </div>
 
+        {/* Back Action Button */}
         <Link
           to="/customers"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200/80 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-xs self-start sm:self-auto cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs self-start sm:self-auto shrink-0"
         >
           <span>←</span>
-          <span>Back to Customers</span>
+          <span>Customers</span>
         </Link>
-      </div>
+      </header>
 
-      {/* 2. Customer Profile Hero Card */}
-      <div className="rounded-2xl bg-white p-6 sm:p-8 border border-slate-200/80 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-green-500 text-white font-bold text-xl flex items-center justify-center shadow-md shadow-emerald-600/15 shrink-0">
-              {customerName.substring(0, 2).toUpperCase()}
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-sans">
-                  {customerName}
-                </h2>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  Active Account
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                {customerCompany} • Registered since Jan 2026
-              </p>
-            </div>
-          </div>
+      {/* 1. Prominent Customer Profile Card */}
+      <CustomerProfile customer={customer} />
 
-          {/* Quick Metrics */}
-          <div className="flex items-center gap-6 self-start md:self-auto">
-            <div>
-              <div className="text-[10px] uppercase font-semibold text-slate-400">Total Value</div>
-              <div className="text-lg font-bold text-slate-900 font-mono mt-0.5">{lifetimeValue}</div>
-            </div>
-            <div className="h-8 w-px bg-slate-200" />
-            <div>
-              <div className="text-[10px] uppercase font-semibold text-slate-400">Customer ID</div>
-              <div className="text-lg font-bold text-emerald-700 font-mono mt-0.5">#{id}</div>
-            </div>
-          </div>
+      {/* 2. Customer Summary Metric Cards */}
+      <CustomerSummary
+        opportunityCount={opportunities.length}
+        totalOpportunityValue={totalOpportunityValue}
+        activityCount={activities.length}
+      />
+
+      {/* 3. Lower 2-Column Section (Related Opportunities + Activity History) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start min-w-0">
+        {/* Left Column: Related Opportunities (~50%) */}
+        <div className="lg:col-span-6 min-w-0 flex flex-col">
+          <RelatedOpportunities opportunities={opportunities} />
         </div>
 
-        {/* Contact Info Pills */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 text-xs">
-          <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100">
-            <span className="text-[10px] font-semibold uppercase text-slate-400 block mb-1">
-              Primary Contact
-            </span>
-            <div className="font-semibold text-slate-800">{contactName}</div>
-            <div className="text-slate-500 text-[11px]">{contactEmail}</div>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100">
-            <span className="text-[10px] font-semibold uppercase text-slate-400 block mb-1">
-              Assigned Account Rep
-            </span>
-            <div className="font-semibold text-slate-800">Sarah Jenkins</div>
-            <div className="text-slate-500 text-[11px]">Senior Account Executive</div>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100">
-            <span className="text-[10px] font-semibold uppercase text-slate-400 block mb-1">
-              Next Milestone
-            </span>
-            <div className="font-semibold text-slate-800">Q3 Renewal Review</div>
-            <div className="text-slate-500 text-[11px]">Scheduled Oct 15, 2026</div>
-          </div>
+        {/* Right Column: Activity Timeline (~50%) */}
+        <div className="lg:col-span-6 min-w-0 flex flex-col">
+          <ActivityTimeline
+            activities={activities}
+            onAddActivity={() => setIsAddActivityOpen(true)}
+          />
         </div>
       </div>
 
-      {/* 3. Associated Opportunities & Timeline Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Active Deals for this Customer */}
-        <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-xs space-y-4">
-          <h3 className="text-base font-bold text-slate-900 font-sans border-b border-slate-100 pb-3">
-            Open Sales Opportunities
-          </h3>
-          <div className="space-y-3">
-            <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-100 flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-900">Enterprise Cloud License Expansion</div>
-                <div className="text-[11px] text-slate-500">Stage: Proposal • Closes Oct 2026</div>
-              </div>
-              <span className="font-mono font-bold text-slate-900 text-xs">$34,000</span>
-            </div>
+      {/* Add Activity Modal */}
+      <AddActivityModal
+        key={`activity-modal-${isAddActivityOpen}`}
+        isOpen={isAddActivityOpen}
+        onClose={() => setIsAddActivityOpen(false)}
+        onSubmit={handleAddActivity}
+        customerName={customer?.name || 'Customer'}
+      />
 
-            <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-100 flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-900">Custom API &amp; Webhook Integration</div>
-                <div className="text-[11px] text-slate-500">Stage: Negotiation • Closes Nov 2026</div>
-              </div>
-              <span className="font-mono font-bold text-slate-900 text-xs">$20,000</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Account Activity */}
-        <div className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-xs space-y-4">
-          <h3 className="text-base font-bold text-slate-900 font-sans border-b border-slate-100 pb-3">
-            Recent Activity Log
-          </h3>
-          <div className="space-y-3 text-xs">
-            <div className="flex items-start gap-3">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></span>
-              <div>
-                <div className="font-semibold text-slate-800">Proposal Sent to Decision Maker</div>
-                <div className="text-slate-400 text-[11px]">Today at 11:30 AM by Sarah Jenkins</div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <span className="w-2 h-2 rounded-full bg-slate-300 mt-1.5 shrink-0"></span>
-              <div>
-                <div className="font-semibold text-slate-800">Technical Demo Call Completed</div>
-                <div className="text-slate-400 text-[11px]">Yesterday at 3:00 PM • 45 mins</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Toast Feedback */}
+      <CustomerToast
+        toast={toast}
+        onClose={() => setToast(null)}
+      />
     </div>
   );
 };
