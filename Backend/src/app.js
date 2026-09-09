@@ -28,10 +28,9 @@ app.use('/api/opportunities', opportunityRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api', activityRoutes);
 
-// 404 Catch-all handler for undefined routes
+
 app.use(notFoundHandler);
 
-// Centralized error handler
 app.use(errorHandler);
 
 export default app;

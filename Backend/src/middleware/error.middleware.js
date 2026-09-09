@@ -8,9 +8,7 @@ export class AppError extends Error {
   }
 }
 
-/**
- * Catch-all 404 handler for undefined routes
- */
+
 export function notFoundHandler(req, res, next) {
   res.status(404).json({
     success: false,
