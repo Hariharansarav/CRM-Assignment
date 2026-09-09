@@ -1,229 +1,373 @@
-const OPPORTUNITIES_DATA = [
-  {
-    id: 'OPP-301',
-    title: 'Enterprise Cloud License Expansion',
-    customer: 'Acme Corporation',
-    customerId: '1',
-    stage: 'Proposal',
-    stageColor: 'bg-cyan-50 text-cyan-700 border-cyan-200/80',
-    dotColor: 'bg-cyan-500',
-    amount: '$54,000',
-    probability: '65%',
-    closeDate: 'Oct 15, 2026',
-    owner: 'Sarah Jenkins',
-  },
-  {
-    id: 'OPP-302',
-    title: 'Fintech API Security Suite',
-    customer: 'Global Tech Innovations',
-    customerId: '25',
-    stage: 'Negotiation',
-    stageColor: 'bg-amber-50 text-amber-700 border-amber-200/80',
-    dotColor: 'bg-amber-500',
-    amount: '$78,200',
-    probability: '80%',
-    closeDate: 'Oct 30, 2026',
-    owner: 'Marcus Chen',
-  },
-  {
-    id: 'OPP-303',
-    title: 'Automated Pipeline Migration',
-    customer: 'Summit Media Group',
-    customerId: '3',
-    stage: 'Won',
-    stageColor: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-    dotColor: 'bg-emerald-500',
-    amount: '$36,500',
-    probability: '100%',
-    closeDate: 'Sep 7, 2026',
-    owner: 'Elena Rostova',
-  },
-  {
-    id: 'OPP-304',
-    title: 'Global Supply Chain Telemetry',
-    customer: 'Pinnacle Supply Chain',
-    customerId: '4',
-    stage: 'Proposal',
-    stageColor: 'bg-cyan-50 text-cyan-700 border-cyan-200/80',
-    dotColor: 'bg-cyan-500',
-    amount: '$92,000',
-    probability: '60%',
-    closeDate: 'Nov 12, 2026',
-    owner: 'Sarah Jenkins',
-  },
-  {
-    id: 'OPP-305',
-    title: 'Industrial Edge Sensor Analytics',
-    customer: 'Vortex Dynamics',
-    customerId: '5',
-    stage: 'Prospecting',
-    stageColor: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
-    dotColor: 'bg-indigo-500',
-    amount: '$18,000',
-    probability: '35%',
-    closeDate: 'Dec 05, 2026',
-    owner: 'David Thorne',
-  },
-];
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import opportunityService from '../services/opportunityService';
+import OpportunityFilters from '../components/opportunities/OpportunityFilters';
+import OpportunityTable from '../components/opportunities/OpportunityTable';
+import OpportunityEmptyState from '../components/opportunities/OpportunityEmptyState';
+import OpportunityForm from '../components/opportunities/OpportunityForm';
+import DeleteOpportunityDialog from '../components/opportunities/DeleteOpportunityDialog';
+import Toast from '../components/ui/Toast';
+
+const formatCurrency = (val) => {
+  if (val === null || val === undefined || isNaN(Number(val))) return '$0';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(Number(val));
+};
 
 /**
- * Phase 3 Opportunities Page Layout
- * Features:
- * - Header with title and descriptive subtext
- * - Visual action toolbar: Stage filter, Expected Close date filter, "+ Add Opportunity" primary button
- * - Clean pipeline table with deal names, customer accounts, probability tags, and stage pills
- * - Strictly matches Login page theme (white card surfaces, subtle borders, emerald accents)
+ * Opportunities Page (Phase 8)
+ * Complete sales opportunity & pipeline management with real backend API integration,
+ * status filtering, search, inline and modal CRUD operations, and responsive design.
  */
-const Opportunities = () => {
+export const Opportunities = () => {
+  const [opportunities, setOpportunities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Search & Filter state
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
+
+  // Overall pipeline statistics summary
+  const [stats, setStats] = useState({
+    totalCount: 0,
+    totalValue: 0,
+    wonValue: 0,
+    wonCount: 0,
+    inProgressCount: 0,
+  });
+
+  // Refresh counter to trigger refetches after CRUD
+  const [refreshCount, setRefreshCount] = useState(0);
+
+  // Modal dialog states
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedOpportunity, setSelectedOpportunity] = useState(null); // null = Add mode, object = Edit mode
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [oppToDelete, setOppToDelete] = useState(null);
+
+  // Toast feedback state
+  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
+
+  // Main data-loading effect (synchronized with status and refreshCount)
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        const data = await opportunityService.getOpportunities({
+          status: status !== 'all' ? status : undefined,
+        });
+        if (isMounted) {
+          setOpportunities(data || []);
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || 'Unable to load opportunities. Please try again.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [status, refreshCount]);
+
+  // Overall stats summary loader
+  const refreshStats = useCallback(() => {
+    opportunityService.getOpportunities().then((allData) => {
+      const all = allData || [];
+      const totalCount = all.length;
+      let totalValue = 0;
+      let wonValue = 0;
+      let wonCount = 0;
+      let inProgressCount = 0;
+
+      all.forEach((item) => {
+        const val = parseFloat(item.value) || 0;
+        totalValue += val;
+        if (item.status === 'Won') {
+          wonValue += val;
+          wonCount += 1;
+        } else if (item.status !== 'Lost') {
+          inProgressCount += 1;
+        }
+      });
+
+      setStats({
+        totalCount,
+        totalValue,
+        wonValue,
+        wonCount,
+        inProgressCount,
+      });
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshStats();
+  }, [refreshStats, refreshCount]);
+
+  // Client-side search filtering across deal name, customer name, and customer company
+  const filteredOpportunities = useMemo(() => {
+    if (!search.trim()) return opportunities;
+    const query = search.trim().toLowerCase();
+    return opportunities.filter((opp) => {
+      const name = (opp.name || '').toLowerCase();
+      const customer = (opp.customer_name || '').toLowerCase();
+      const company = (opp.customer_company || '').toLowerCase();
+      return name.includes(query) || customer.includes(query) || company.includes(query);
+    });
+  }, [opportunities, search]);
+
+  // Handlers for search and filtering
+  const handleSearchChange = (newSearch) => {
+    setSearch(newSearch);
+  };
+
+  const handleStatusChange = (newStatus) => {
+    setLoading(true);
+    setStatus(newStatus);
+  };
+
+  const handleClearFilters = () => {
+    setLoading(true);
+    setSearch('');
+    setStatus('all');
+  };
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    setRefreshCount((c) => c + 1);
+  };
+
+  // CRUD modal triggers
+  const handleOpenAddModal = () => {
+    setSelectedOpportunity(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEditModal = (opp) => {
+    setSelectedOpportunity(opp);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenDeleteDialog = (opp) => {
+    setOppToDelete(opp);
+    setIsDeleteOpen(true);
+  };
+
+  // Inline stage status quick-change handler
+  const handleInlineStatusChange = async (oppId, newStatus) => {
+    try {
+      await opportunityService.updateOpportunity(oppId, { status: newStatus });
+      setToast({ message: `Opportunity stage updated to ${newStatus}.`, type: 'success' });
+      setRefreshCount((c) => c + 1);
+    } catch (err) {
+      setToast({
+        message: err.message || 'Failed to update opportunity stage.',
+        type: 'error',
+      });
+    }
+  };
+
+  // Form submission handler (Create or Update)
+  const handleFormSubmit = async (formData) => {
+    if (selectedOpportunity && selectedOpportunity.id) {
+      // Edit mode
+      await opportunityService.updateOpportunity(selectedOpportunity.id, formData);
+      setToast({ message: 'Opportunity updated successfully.', type: 'success' });
+    } else {
+      // Create mode
+      await opportunityService.createOpportunity(formData);
+      setToast({ message: 'Opportunity created successfully.', type: 'success' });
+    }
+    setRefreshCount((c) => c + 1);
+  };
+
+  // Delete confirmation handler
+  const handleDeleteConfirm = async (oppId) => {
+    await opportunityService.deleteOpportunity(oppId);
+    setToast({ message: 'Opportunity deleted successfully.', type: 'success' });
+    setRefreshCount((c) => c + 1);
+  };
+
+  const isFiltered = Boolean(search || status !== 'all');
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* 1. Page Header & Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight font-sans">
+    <div className="w-full max-w-7xl mx-auto space-y-4 pb-12 min-w-0">
+      {/* 1. Page Header & Primary Action */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans truncate">
             Opportunities
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Track and manage your active sales pipeline, deal stages, and revenue forecasts.
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">
+            Track and forecast your active sales deals and revenue stages.
           </p>
         </div>
 
-        {/* Primary Action Button (Login page button style) */}
+        {/* Primary "+ Add Opportunity" Button */}
         <button
           type="button"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#1b2126] hover:bg-black text-white text-xs sm:text-sm font-semibold shadow-sm active:scale-[0.99] transition-all cursor-pointer self-start sm:self-auto focus:outline-none"
+          onClick={handleOpenAddModal}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-full bg-[#1b2126] hover:bg-black active:bg-slate-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer self-start sm:self-auto shrink-0 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
         >
-          <span className="text-base leading-none">+</span>
+          <span className="text-base leading-none font-bold">+</span>
           <span>Add Opportunity</span>
         </button>
-      </div>
+      </header>
 
-      {/* 2. Pipeline Summary Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-          <div className="text-[11px] font-medium text-slate-500">Pipeline Total</div>
-          <div className="text-xl font-bold text-slate-900 font-mono mt-1">$278,700</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">18 Active Deals</div>
+      {/* 2. Pipeline Summary Statistics (Compact KPI Cards) */}
+      <section
+        aria-label="Pipeline Summary Statistics"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5"
+      >
+        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+            Pipeline Value
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-slate-900 font-mono mt-0.5 truncate">
+            {formatCurrency(stats.totalValue)}
+          </div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            {stats.totalCount} total deals
+          </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-          <div className="text-[11px] font-medium text-slate-500">Weighted Forecast</div>
-          <div className="text-xl font-bold text-emerald-700 font-mono mt-1">$184,500</div>
-          <div className="text-[10px] text-emerald-600 font-medium mt-0.5">+14% vs Q2</div>
+        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-600 uppercase tracking-wider block truncate">
+            Closed Won Value
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-emerald-700 font-mono mt-0.5 truncate">
+            {formatCurrency(stats.wonValue)}
+          </div>
+          <div className="text-[10px] text-emerald-600 font-medium mt-0.5">
+            {stats.wonCount} won deals
+          </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-          <div className="text-[11px] font-medium text-slate-500">Avg Deal Size</div>
-          <div className="text-xl font-bold text-slate-900 font-mono mt-1">$55,740</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Enterprise Segment</div>
+        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-blue-600 uppercase tracking-wider block truncate">
+            Active Deals
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-blue-700 font-sans mt-0.5">
+            {stats.inProgressCount}
+          </div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            Prospecting / In Progress
+          </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-          <div className="text-[11px] font-medium text-slate-500">Win Rate</div>
-          <div className="text-xl font-bold text-slate-900 font-mono mt-1">68.4%</div>
-          <div className="text-[10px] text-emerald-600 font-medium mt-0.5">High Conversion</div>
+        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+            Win Rate
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-slate-900 font-sans mt-0.5">
+            {stats.totalCount > 0
+              ? `${Math.round((stats.wonCount / stats.totalCount) * 100)}%`
+              : '0%'}
+          </div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            Conversion ratio
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* 3. Stage & Filter Bar */}
-      <div className="rounded-2xl bg-white p-4 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {/* Search Input Box */}
-        <div className="relative flex-1">
-          <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search opportunities by deal title or customer..."
-            readOnly
-            className="w-full h-10 pl-10 pr-4 rounded-xl bg-slate-50/70 border border-slate-200/80 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/30 transition-all cursor-default"
+      {/* 3. Search & Filter Bar */}
+      <section aria-label="Opportunity Filters" className="min-w-0">
+        <OpportunityFilters
+          search={search}
+          status={status}
+          onSearchChange={handleSearchChange}
+          onStatusChange={handleStatusChange}
+          onClearFilters={handleClearFilters}
+          totalCount={filteredOpportunities.length}
+        />
+      </section>
+
+      {/* 4. Main Opportunities Content Area */}
+      <main aria-label="Opportunity Listing" className="min-w-0">
+        {error && !loading ? (
+          /* Error State with Retry */
+          <div className="rounded-2xl bg-white border border-rose-200 p-6 sm:p-8 text-center shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              Unable to load opportunities
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto mb-4">
+              {error}
+            </p>
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
+              <span>Try Again</span>
+            </button>
+          </div>
+        ) : !loading && filteredOpportunities.length === 0 ? (
+          /* Empty State */
+          <OpportunityEmptyState
+            isFiltered={isFiltered}
+            onClearFilters={handleClearFilters}
+            onAddOpportunity={handleOpenAddModal}
           />
-        </div>
+        ) : (
+          /* Opportunity Table / Loading Skeleton */
+          <OpportunityTable
+            opportunities={filteredOpportunities}
+            loading={loading}
+            onEdit={handleOpenEditModal}
+            onDelete={handleOpenDeleteDialog}
+            onStatusChange={handleInlineStatusChange}
+            totalCount={stats.totalCount}
+          />
+        )}
+      </main>
 
-        {/* Filter Dropdowns */}
-        <div className="flex items-center gap-2.5">
-          <div className="h-10 px-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 text-xs font-medium text-slate-700 flex items-center gap-2 cursor-pointer hover:border-slate-300 transition-colors">
-            <span>Stage: <strong>All Stages</strong></span>
-            <span className="text-slate-400 text-[10px]">▼</span>
-          </div>
+      {/* 5. Add / Edit Opportunity Modal */}
+      <OpportunityForm
+        key={selectedOpportunity ? `edit-${selectedOpportunity.id}` : `create-${isFormOpen}`}
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={handleFormSubmit}
+        initialData={selectedOpportunity}
+      />
 
-          <div className="h-10 px-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 text-xs font-medium text-slate-700 flex items-center gap-2 cursor-pointer hover:border-slate-300 transition-colors">
-            <span>Close Date: <strong>This Quarter</strong></span>
-            <span className="text-slate-400 text-[10px]">▼</span>
-          </div>
-        </div>
-      </div>
+      {/* 6. Delete Confirmation Dialog */}
+      <DeleteOpportunityDialog
+        key={oppToDelete ? `del-${oppToDelete.id}` : 'del-closed'}
+        isOpen={isDeleteOpen}
+        opportunity={oppToDelete}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
+      />
 
-      {/* 4. Opportunities Pipeline Table Card */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                <th className="py-3.5 px-5 sm:px-6">Opportunity / Deal</th>
-                <th className="py-3.5 px-4">Customer Account</th>
-                <th className="py-3.5 px-4">Deal Stage</th>
-                <th className="py-3.5 px-4">Amount</th>
-                <th className="py-3.5 px-4">Win Probability</th>
-                <th className="py-3.5 px-4">Expected Close</th>
-                <th className="py-3.5 px-4">Deal Owner</th>
-                <th className="py-3.5 px-5 sm:px-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {OPPORTUNITIES_DATA.map((opp) => (
-                <tr key={opp.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="py-4 px-5 sm:px-6">
-                    <div className="font-semibold text-slate-900 text-sm">{opp.title}</div>
-                    <div className="text-[11px] text-slate-400 font-mono">{opp.id}</div>
-                  </td>
-                  <td className="py-4 px-4 font-medium text-slate-700">{opp.customer}</td>
-                  <td className="py-4 px-4">
-                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${opp.stageColor}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${opp.dotColor}`}></span>
-                      {opp.stage}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4 font-mono font-bold text-slate-900 text-sm">
-                    {opp.amount}
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-500 rounded-full"
-                          style={{ width: opp.probability }}
-                        ></div>
-                      </div>
-                      <span className="font-mono text-slate-600 font-semibold">{opp.probability}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 text-slate-600">{opp.closeDate}</td>
-                  <td className="py-4 px-4 text-slate-600">{opp.owner}</td>
-                  <td className="py-4 px-5 sm:px-6 text-right">
-                    <button
-                      type="button"
-                      className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 font-semibold transition-all cursor-pointer"
-                    >
-                      Manage
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Table Footer */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
-          <span>Showing <strong>5</strong> of <strong>18</strong> active opportunities</span>
-          <div className="flex items-center gap-1.5">
-            <button type="button" disabled className="px-3 py-1 rounded-lg border border-slate-200 bg-white text-slate-400 cursor-not-allowed">Previous</button>
-            <button type="button" className="px-3 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 font-medium cursor-pointer">Next</button>
-          </div>
-        </div>
-      </div>
+      {/* 7. Action Toast Feedback */}
+      <Toast
+        toast={toast}
+        onClose={() => setToast(null)}
+      />
     </div>
   );
 };

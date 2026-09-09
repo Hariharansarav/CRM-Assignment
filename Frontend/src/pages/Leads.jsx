@@ -1,208 +1,313 @@
-const LEADS_DATA = [
-  {
-    id: '101',
-    name: 'Sarah Jenkins',
-    company: 'Apex Cloud Systems',
-    email: 'sarah.j@apexcloud.io',
-    source: 'Website Form',
-    status: 'Qualified',
-    statusClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-    dotClass: 'bg-emerald-500',
-    estValue: '$24,000',
-    assignedTo: 'Sarah Jenkins',
-    created: 'Sep 9, 2026',
-    initials: 'SJ',
-  },
-  {
-    id: '102',
-    name: 'Marcus Chen',
-    company: 'Vanguard Retail Tech',
-    email: 'm.chen@vanguardtech.com',
-    source: 'LinkedIn Inbound',
-    status: 'Contacted',
-    statusClass: 'bg-blue-50 text-blue-700 border-blue-200/80',
-    dotClass: 'bg-blue-500',
-    estValue: '$18,500',
-    assignedTo: 'Marcus Chen',
-    created: 'Sep 8, 2026',
-    initials: 'MC',
-  },
-  {
-    id: '103',
-    name: 'Elena Rostova',
-    company: 'Nordic Logistics Group',
-    email: 'elena@nordiclogistics.eu',
-    source: 'Partner Referral',
-    status: 'New',
-    statusClass: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
-    dotClass: 'bg-indigo-500',
-    estValue: '$32,000',
-    assignedTo: 'Elena Rostova',
-    created: 'Sep 8, 2026',
-    initials: 'ER',
-  },
-  {
-    id: '104',
-    name: 'David Thorne',
-    company: 'Horizon BioPharma',
-    email: 'd.thorne@horizonbio.com',
-    source: 'Outbound Cold Email',
-    status: 'Qualified',
-    statusClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-    dotClass: 'bg-emerald-500',
-    estValue: '$45,000',
-    assignedTo: 'David Thorne',
-    created: 'Sep 6, 2026',
-    initials: 'DT',
-  },
-  {
-    id: '105',
-    name: 'Jessica Morales',
-    company: 'Crestview Capital Partners',
-    email: 'j.morales@crestviewcap.com',
-    source: 'Trade Conference',
-    status: 'Lost',
-    statusClass: 'bg-red-50 text-red-700 border-red-200/80',
-    dotClass: 'bg-red-500',
-    estValue: '$15,000',
-    assignedTo: 'Sarah Jenkins',
-    created: 'Sep 3, 2026',
-    initials: 'JM',
-  },
-];
+import { useState, useEffect, useCallback } from 'react';
+import leadService from '../services/leadService';
+import LeadFilters from '../components/leads/LeadFilters';
+import LeadTable from '../components/leads/LeadTable';
+import LeadEmptyState from '../components/leads/LeadEmptyState';
+import LeadForm from '../components/leads/LeadForm';
+import DeleteLeadDialog from '../components/leads/DeleteLeadDialog';
+import Toast from '../components/ui/Toast';
 
 /**
- * Phase 3 Leads Page Layout
- * Features:
- * - Header with title and descriptive subtext
- * - Visual action toolbar: Search input, Status filter, "+ Add Lead" primary button
- * - Clean leads table with source tags, values, and status pills
- * - Strictly matches Login page theme (white card surfaces, subtle borders, emerald accents)
+ * Leads Page (Phase 7)
+ * Complete sales lead management with real backend API integration,
+ * search & status filtering, inline and modal CRUD operations, and responsive design.
  */
-const Leads = () => {
+export const Leads = () => {
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Search & Filter state
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
+
+  // Overall lead statistics summary
+  const [stats, setStats] = useState({ total: 0, new: 0, contacted: 0, qualified: 0, lost: 0 });
+
+  // Refresh counter to trigger refetches after CRUD
+  const [refreshCount, setRefreshCount] = useState(0);
+
+  // Modal dialog states
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState(null); // null = Add mode, object = Edit mode
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState(null);
+
+  // Toast feedback state
+  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
+
+  // Main data-loading effect (synchronized with search, status, and refreshCount)
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        const data = await leadService.getLeads({ search, status });
+        if (isMounted) {
+          setLeads(data || []);
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || 'Unable to load leads. Please try again.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [search, status, refreshCount]);
+
+  // Overall stats summary loader
+  const refreshStats = useCallback(() => {
+    leadService.getLeads().then((allData) => {
+      const all = allData || [];
+      const total = all.length;
+      const newCount = all.filter((l) => l.status === 'New').length;
+      const contacted = all.filter((l) => l.status === 'Contacted').length;
+      const qualified = all.filter((l) => l.status === 'Qualified').length;
+      const lost = all.filter((l) => l.status === 'Lost').length;
+      setStats({ total, new: newCount, contacted, qualified, lost });
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshStats();
+  }, [refreshStats, refreshCount]);
+
+  // Handlers for search and filtering
+  const handleSearchChange = (newSearch) => {
+    setLoading(true);
+    setSearch(newSearch);
+  };
+
+  const handleStatusChange = (newStatus) => {
+    setLoading(true);
+    setStatus(newStatus);
+  };
+
+  const handleClearFilters = () => {
+    setLoading(true);
+    setSearch('');
+    setStatus('all');
+  };
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    setRefreshCount((c) => c + 1);
+  };
+
+  // CRUD modal triggers
+  const handleOpenAddModal = () => {
+    setSelectedLead(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEditModal = (lead) => {
+    setSelectedLead(lead);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenDeleteDialog = (lead) => {
+    setLeadToDelete(lead);
+    setIsDeleteOpen(true);
+  };
+
+  // Inline status quick-change handler
+  const handleInlineStatusChange = async (leadId, newStatus) => {
+    try {
+      await leadService.updateLead(leadId, { status: newStatus });
+      setToast({ message: `Lead status updated to ${newStatus}.`, type: 'success' });
+      setRefreshCount((c) => c + 1);
+    } catch (err) {
+      setToast({
+        message: err.message || 'Failed to update lead status.',
+        type: 'error',
+      });
+    }
+  };
+
+  // Form submission handler (Create or Update)
+  const handleFormSubmit = async (formData) => {
+    if (selectedLead && selectedLead.id) {
+      // Edit mode
+      await leadService.updateLead(selectedLead.id, formData);
+      setToast({ message: 'Lead updated successfully.', type: 'success' });
+    } else {
+      // Create mode
+      await leadService.createLead(formData);
+      setToast({ message: 'Lead created successfully.', type: 'success' });
+    }
+    setRefreshCount((c) => c + 1);
+  };
+
+  // Delete confirmation handler
+  const handleDeleteConfirm = async (leadId) => {
+    await leadService.deleteLead(leadId);
+    setToast({ message: 'Lead deleted successfully.', type: 'success' });
+    setRefreshCount((c) => c + 1);
+  };
+
+  const isFiltered = Boolean(search || status !== 'all');
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* 1. Page Header & Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight font-sans">
+    <div className="w-full max-w-7xl mx-auto space-y-4 pb-12 min-w-0">
+      {/* 1. Page Header & Primary Action */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans truncate">
             Leads
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Manage and track your sales leads from first contact to qualification.
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">
+            Track and convert prospective sales opportunities.
           </p>
         </div>
 
-        {/* Primary Action Button (Login page button style) */}
+        {/* Primary "+ Add Lead" Button */}
         <button
           type="button"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#1b2126] hover:bg-black text-white text-xs sm:text-sm font-semibold shadow-sm active:scale-[0.99] transition-all cursor-pointer self-start sm:self-auto focus:outline-none"
+          onClick={handleOpenAddModal}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-full bg-[#1b2126] hover:bg-black active:bg-slate-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer self-start sm:self-auto shrink-0 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
         >
-          <span className="text-base leading-none">+</span>
+          <span className="text-base leading-none font-bold">+</span>
           <span>Add Lead</span>
         </button>
-      </div>
+      </header>
 
-      {/* 2. Search & Status Filter Bar */}
-      <div className="rounded-2xl bg-white p-4 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {/* Search Input Box */}
-        <div className="relative flex-1">
-          <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search leads by name, company, or email..."
-            readOnly
-            className="w-full h-10 pl-10 pr-4 rounded-xl bg-slate-50/70 border border-slate-200/80 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/30 transition-all cursor-default"
+      {/* 2. Lead Summary Statistics (Compact KPI Cards) */}
+      <section
+        aria-label="Lead Summary Statistics"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5"
+      >
+        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+            Total Leads
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-slate-900 font-sans mt-0.5">
+            {stats.total}
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-600 uppercase tracking-wider block truncate">
+            Qualified
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-emerald-700 font-sans mt-0.5">
+            {stats.qualified}
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-blue-600 uppercase tracking-wider block truncate">
+            In Contact / New
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-blue-700 font-sans mt-0.5">
+            {stats.new + stats.contacted}
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
+            Lost
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-slate-600 font-sans mt-0.5">
+            {stats.lost}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Search & Filter Bar */}
+      <section aria-label="Lead Filters" className="min-w-0">
+        <LeadFilters
+          search={search}
+          status={status}
+          onSearchChange={handleSearchChange}
+          onStatusChange={handleStatusChange}
+          onClearFilters={handleClearFilters}
+          totalCount={leads.length}
+        />
+      </section>
+
+      {/* 4. Main Leads Content Area */}
+      <main aria-label="Lead Listing" className="min-w-0">
+        {error && !loading ? (
+          /* Error State with Retry */
+          <div className="rounded-2xl bg-white border border-rose-200 p-6 sm:p-8 text-center shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              Unable to load leads
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto mb-4">
+              {error}
+            </p>
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
+              <span>Try Again</span>
+            </button>
+          </div>
+        ) : !loading && leads.length === 0 ? (
+          /* Empty State */
+          <LeadEmptyState
+            isFiltered={isFiltered}
+            onClearFilters={handleClearFilters}
+            onAddLead={handleOpenAddModal}
           />
-        </div>
+        ) : (
+          /* Leads Table / Loading Skeleton */
+          <LeadTable
+            leads={leads}
+            loading={loading}
+            onEdit={handleOpenEditModal}
+            onDelete={handleOpenDeleteDialog}
+            onStatusChange={handleInlineStatusChange}
+            totalCount={stats.total}
+          />
+        )}
+      </main>
 
-        {/* Filter Dropdowns */}
-        <div className="flex items-center gap-2.5">
-          <div className="h-10 px-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 text-xs font-medium text-slate-700 flex items-center gap-2 cursor-pointer hover:border-slate-300 transition-colors">
-            <span>Status: <strong>All Leads</strong></span>
-            <span className="text-slate-400 text-[10px]">▼</span>
-          </div>
+      {/* 5. Add / Edit Lead Modal */}
+      <LeadForm
+        key={selectedLead ? `edit-${selectedLead.id}` : `create-${isFormOpen}`}
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={handleFormSubmit}
+        initialData={selectedLead}
+      />
 
-          <div className="h-10 px-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 text-xs font-medium text-slate-700 flex items-center gap-2 cursor-pointer hover:border-slate-300 transition-colors">
-            <span>Source: <strong>All Channels</strong></span>
-            <span className="text-slate-400 text-[10px]">▼</span>
-          </div>
-        </div>
-      </div>
+      {/* 6. Delete Confirmation Dialog */}
+      <DeleteLeadDialog
+        key={leadToDelete ? `del-${leadToDelete.id}` : 'del-closed'}
+        isOpen={isDeleteOpen}
+        lead={leadToDelete}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
+      />
 
-      {/* 3. Leads Table Card */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                <th className="py-3.5 px-5 sm:px-6">Lead / Contact</th>
-                <th className="py-3.5 px-4">Company</th>
-                <th className="py-3.5 px-4">Source Channel</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4">Est. Deal Value</th>
-                <th className="py-3.5 px-4">Assigned Rep</th>
-                <th className="py-3.5 px-4">Date Added</th>
-                <th className="py-3.5 px-5 sm:px-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {LEADS_DATA.map((lead) => (
-                <tr key={lead.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="py-4 px-5 sm:px-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0">
-                        {lead.initials}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-slate-900 text-sm">{lead.name}</div>
-                        <div className="text-[11px] text-slate-400">{lead.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 text-slate-700 font-medium">{lead.company}</td>
-                  <td className="py-4 px-4">
-                    <span className="inline-block px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-medium text-[11px]">
-                      {lead.source}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${lead.statusClass}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${lead.dotClass}`}></span>
-                      {lead.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4 font-mono font-bold text-slate-900 text-sm">
-                    {lead.estValue}
-                  </td>
-                  <td className="py-4 px-4 text-slate-600">{lead.assignedTo}</td>
-                  <td className="py-4 px-4 text-slate-500">{lead.created}</td>
-                  <td className="py-4 px-5 sm:px-6 text-right">
-                    <button
-                      type="button"
-                      className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 font-semibold transition-all cursor-pointer"
-                    >
-                      Convert
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Table Footer */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
-          <span>Showing <strong>5</strong> of <strong>45</strong> leads</span>
-          <div className="flex items-center gap-1.5">
-            <button type="button" disabled className="px-3 py-1 rounded-lg border border-slate-200 bg-white text-slate-400 cursor-not-allowed">Previous</button>
-            <button type="button" className="px-3 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 font-medium cursor-pointer">Next</button>
-          </div>
-        </div>
-      </div>
+      {/* 7. Action Toast Feedback */}
+      <Toast
+        toast={toast}
+        onClose={() => setToast(null)}
+      />
     </div>
   );
 };
