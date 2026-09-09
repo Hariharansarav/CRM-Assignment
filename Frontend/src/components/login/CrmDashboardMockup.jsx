@@ -162,18 +162,18 @@ const CrmDashboardMockup = () => {
             </div>
           </div>
 
-          {/* AI Sales Assistant */}
+          {/* Pipeline Health */}
           <div className="bg-gradient-to-br from-emerald-50 to-teal-50/60 rounded-xl p-3 border border-emerald-100 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-900 mb-1">
-                <span>✦</span> AI Sales Assistant
+                <span>✦</span> Pipeline Health
               </div>
               <p className="text-[10px] text-emerald-800/80 leading-snug">
-                Predictive deal scoring and automated pipeline workflows ready.
+                Real-time opportunity conversion and active deal tracking.
               </p>
             </div>
             <div className="text-[10px] font-semibold text-emerald-700 flex items-center gap-1 mt-2">
-              <span>Ask assistant</span>
+              <span>View pipeline</span>
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
