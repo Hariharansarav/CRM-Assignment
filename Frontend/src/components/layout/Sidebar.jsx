@@ -1,5 +1,6 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import auth from '../../utils/auth';
+import crmGreenLogo from '../../assets/CRM-green.png';
 
 /**
  * Navigation items strictly based on project pages:
@@ -90,18 +91,12 @@ const Sidebar = ({ onClose, isMobile = false }) => {
           {/* Mobile Header: Logo & Title */}
           <div className="h-16 px-5 flex items-center justify-between border-b border-slate-800/80">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                <svg className="w-6 h-6" viewBox="0 0 32 32" fill="none">
-                  <defs>
-                    <linearGradient id="mobile-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#34d399" />
-                      <stop offset="60%" stopColor="#10b981" />
-                      <stop offset="100%" stopColor="#059669" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="15" cy="15" r="9" stroke="url(#mobile-logo-gradient)" strokeWidth="3.5" strokeLinecap="round" />
-                  <path d="M21.5 21.5L26 26" stroke="url(#mobile-logo-gradient)" strokeWidth="3.5" strokeLinecap="round" />
-                </svg>
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 p-1">
+                <img
+                  src={crmGreenLogo}
+                  alt="Mini Sales CRM"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <span className="font-bold text-white text-sm tracking-tight block leading-tight font-sans">
@@ -216,32 +211,14 @@ const Sidebar = ({ onClose, isMobile = false }) => {
           <Link
             to="/dashboard"
             aria-label="Mini Sales CRM Dashboard"
-            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 p-1"
           >
-            {/* Stylized Logo with Login Theme Accent (Emerald Gradient) */}
-            <svg className="w-7 h-7 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" viewBox="0 0 32 32" fill="none">
-              <defs>
-                <linearGradient id="sidebar-logo-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#34d399" />
-                  <stop offset="50%" stopColor="#10b981" />
-                  <stop offset="100%" stopColor="#059669" />
-                </linearGradient>
-              </defs>
-              <circle
-                cx="15"
-                cy="15"
-                r="9"
-                stroke="url(#sidebar-logo-emerald)"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M21.5 21.5L26 26"
-                stroke="url(#sidebar-logo-emerald)"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-              />
-            </svg>
+            {/* Green CRM Logo */}
+            <img
+              src={crmGreenLogo}
+              alt="Mini Sales CRM"
+              className="w-8 h-8 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+            />
           </Link>
 
           {/* Logo Tooltip */}

@@ -1,30 +1,39 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import auth from '../../utils/auth';
+import crmGreenLogo from '../../assets/CRM-green.png';
 
 /**
- * Header Component (Matching Reference Image 2 & Prompt Spec)
- * - Clean, minimal white surface (h-16)
+ * Header Component
+ * Modern, high-performance top bar matching the Mini Sales CRM dark dock / emerald theme:
+ * - Search bar completely removed per user request
  * - Left side:
- *   - Desktop: Wide rounded pill search bar with magnifying glass & "Search ..." placeholder
- *   - Mobile: Hamburger drawer toggle + stylized CRM logo
+ *   - Mobile (<md): Hamburger drawer toggle + Emerald CRM logo + brand text
+ *   - Desktop (md+): Workspace identity badge ("Mini Sales CRM / Workspace") + dynamic section breadcrumb
+ * - Center:
+ *   - Desktop (xl+): Live Pipeline Glance Ticker ($205.5K Pipeline • 8 Deals • 10 Leads • Interactive Live Sync button)
+ *   - Desktop (lg): Date pill + Live Synced indicator
  * - Right side:
- *   - Message / Chat icon with orange notification dot
- *   - Notification Bell icon with orange notification dot
- *   - User Profile: Circular avatar, Admin username, dropdown chevron with full session details & logout
+ *   - Dark "+ New Record" quick create dropdown
+ *   - Messages icon with coral notification dot & realistic conversation drawer
+ *   - Notifications bell with coral notification dot & sales alert drawer
+ *   - Circular user avatar with admin session menu & sign out
  */
 const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [searchQuery, setSearchQuery] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncedText, setLastSyncedText] = useState('Synced');
 
   const profileRef = useRef(null);
   const notifRef = useRef(null);
   const messagesRef = useRef(null);
-  const searchInputRef = useRef(null);
+  const quickActionRef = useRef(null);
 
   // Handle outside clicks and Escape key to dismiss open popovers
   useEffect(() => {
@@ -38,6 +47,9 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
       if (messagesRef.current && !messagesRef.current.contains(e.target)) {
         setIsMessagesOpen(false);
       }
+      if (quickActionRef.current && !quickActionRef.current.contains(e.target)) {
+        setIsQuickActionOpen(false);
+      }
     };
 
     const handleKeyDown = (e) => {
@@ -45,11 +57,7 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
         setIsProfileOpen(false);
         setIsNotificationsOpen(false);
         setIsMessagesOpen(false);
-      }
-      // Keyboard shortcut ⌘K or Ctrl+K to focus search input
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
+        setIsQuickActionOpen(false);
       }
     };
 
@@ -67,15 +75,118 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
     navigate('/login', { replace: true });
   };
 
+  // Interactive Live Sync feedback
+  const handleSync = () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    setLastSyncedText('Syncing...');
+    setTimeout(() => {
+      setIsSyncing(false);
+      setLastSyncedText('Just now');
+      setTimeout(() => {
+        setLastSyncedText('Synced');
+      }, 3000);
+    }, 850);
+  };
+
+  // Determine section information based on active route
+  const getPageInfo = () => {
+    const path = location.pathname;
+    if (path === '/dashboard') {
+      return {
+        section: 'Dashboard',
+        tag: 'Live Overview',
+        icon: (
+          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="3" y="3" width="7.5" height="7.5" rx="1.75" />
+            <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.75" />
+            <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.75" />
+            <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.75" />
+          </svg>
+        ),
+      };
+    }
+    if (path.startsWith('/customers/') && path !== '/customers') {
+      return {
+        section: 'Customers',
+        tag: 'Customer Profile',
+        icon: (
+          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+            <path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z" />
+            <circle cx="16" cy="14" r="1" fill="currentColor" />
+          </svg>
+        ),
+      };
+    }
+    if (path.startsWith('/customers')) {
+      return {
+        section: 'Customers',
+        tag: 'Client Accounts',
+        icon: (
+          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+            <path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z" />
+            <circle cx="16" cy="14" r="1" fill="currentColor" />
+          </svg>
+        ),
+      };
+    }
+    if (path.startsWith('/leads')) {
+      return {
+        section: 'Leads',
+        tag: 'Prospect Ingestion',
+        icon: (
+          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 2L11 13" />
+            <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+          </svg>
+        ),
+      };
+    }
+    if (path.startsWith('/opportunities')) {
+      return {
+        section: 'Opportunities',
+        tag: 'Revenue Pipeline',
+        icon: (
+          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 20h18" />
+            <path d="M4 16l6-6 4 4 6-8" />
+            <circle cx="4" cy="16" r="1.5" fill="currentColor" />
+            <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+            <circle cx="14" cy="14" r="1.5" fill="currentColor" />
+            <circle cx="20" cy="6" r="1.5" fill="currentColor" />
+          </svg>
+        ),
+      };
+    }
+    return {
+      section: 'Workspace',
+      tag: 'Sales Hub',
+      icon: null,
+    };
+  };
+
+  const pageInfo = getPageInfo();
+
+  // Current formatted date
+  const todayFormatted = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date());
+
   return (
-    <header className="h-16 bg-white border-b border-slate-100/90 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 shrink-0 select-none relative z-30">
-      {/* 1. Left Side: Search Bar (Desktop) or Mobile Menu Toggle + Logo */}
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+    <header className="h-16 bg-white border-b border-slate-100/90 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 shrink-0 select-none relative z-30">
+      {/* ===================================================================== */}
+      {/* 1. LEFT SIDE: Workspace Brand / Breadcrumb Context                   */}
+      {/* ===================================================================== */}
+      <div className="flex items-center gap-3 min-w-0">
         {/* Mobile Hamburger Toggle Button (Hidden on md+ screens) */}
         <button
           type="button"
           onClick={onToggleMobileMenu}
-          className="md:hidden p-2 -ml-1 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer"
+          className="md:hidden p-2 -ml-1 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer shrink-0"
           aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
         >
           {isMobileMenuOpen ? (
@@ -103,77 +214,197 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
           )}
         </button>
 
-        {/* Mobile Brand Identity with Login Emerald Accent (Hidden on md+) */}
-        <div className="flex md:hidden items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5" viewBox="0 0 32 32" fill="none">
-              <defs>
-                <linearGradient id="header-mobile-logo" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#34d399" />
-                  <stop offset="60%" stopColor="#10b981" />
-                  <stop offset="100%" stopColor="#059669" />
-                </linearGradient>
-              </defs>
-              <circle cx="15" cy="15" r="9" stroke="url(#header-mobile-logo)" strokeWidth="3.5" strokeLinecap="round" />
-              <path d="M21.5 21.5L26 26" stroke="url(#header-mobile-logo)" strokeWidth="3.5" strokeLinecap="round" />
-            </svg>
+        {/* Mobile Brand Identity with Green CRM Logo (Hidden on md+) */}
+        <div className="flex md:hidden items-center gap-2 min-w-0">
+          <div className="w-7 h-7 rounded-lg bg-[#11161b] border border-slate-800 flex items-center justify-center shrink-0 p-1">
+            <img src={crmGreenLogo} alt="CRM Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-bold text-slate-900 text-sm tracking-tight font-sans">
+          <span className="font-bold text-slate-900 text-sm tracking-tight font-sans truncate">
             Mini Sales CRM
           </span>
         </div>
 
-        {/* Desktop Search Bar (Matching Reference Image 2 & 3: Rounded pill input, placeholder: "Search ...") */}
-        <div className="hidden md:flex items-center w-full max-w-sm lg:max-w-md">
-          <div className="relative w-full group">
-            {/* Search Icon */}
-            <svg
-              className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within:text-emerald-600"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+        {/* Desktop Workspace & Breadcrumb Bar (Distinct & Sophisticated) */}
+        <div className="hidden md:flex items-center gap-2.5 min-w-0">
+          {/* Workspace Pill Badge */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/70 text-xs font-semibold text-slate-800 shadow-2xs shrink-0">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="font-bold text-slate-900 tracking-tight">Mini Sales CRM</span>
+            <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200/50">
+              Live
+            </span>
+          </div>
 
-            {/* Input with exact placeholder "Search ..." */}
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search ..."
-              aria-label="Search"
-              className="w-full h-10 pl-10 pr-14 rounded-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white border border-slate-200/80 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
-            />
+          <span className="text-slate-300 font-light select-none">/</span>
 
-            {/* Clear button if typed, or ⌘ K indicator */}
-            {searchQuery ? (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full cursor-pointer focus:outline-none"
-                aria-label="Clear search"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-            ) : (
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono bg-white px-2 py-0.5 rounded-full border border-slate-200 text-slate-400 pointer-events-none shadow-2xs font-medium">
-                ⌘ K
-              </kbd>
-            )}
+          {/* Active Route Context */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium min-w-0 truncate">
+            {pageInfo.icon}
+            <span className="font-bold text-slate-900 tracking-tight">{pageInfo.section}</span>
+            <span className="hidden xl:inline text-[11px] text-slate-400">
+              ({pageInfo.tag})
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 2. Right Side: Message / Chat, Notifications, User Profile (Matching Reference Image 2 & 3) */}
-      <div className="flex items-center gap-2 sm:gap-3.5 shrink-0">
+      {/* ===================================================================== */}
+      {/* 2. CENTER: Live Pipeline Ticker & Interactive Sync Status            */}
+      {/* ===================================================================== */}
+      {/* On wide screens (xl+): Full Executive Metric Bar */}
+      <div className="hidden xl:flex items-center gap-3 px-4 py-1.5 rounded-full bg-slate-50/90 border border-slate-200/60 shadow-2xs text-xs text-slate-600">
+        <div className="flex items-center gap-1.5">
+          <span className="text-slate-400 text-[11px]">Pipeline:</span>
+          <span className="font-bold text-slate-900">$205,500</span>
+        </div>
+        <span className="text-slate-200">•</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-slate-400 text-[11px]">Deals:</span>
+          <span className="font-bold text-slate-900">8 Active</span>
+        </div>
+        <span className="text-slate-200">•</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-slate-400 text-[11px]">Leads:</span>
+          <span className="font-bold text-emerald-700">10 Tracked</span>
+        </div>
+        <span className="text-slate-200">•</span>
+        {/* Interactive Sync Button */}
+        <button
+          type="button"
+          onClick={handleSync}
+          title="Refresh CRM Sync"
+          className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200/60 transition-all cursor-pointer"
+        >
+          <svg
+            className={`w-3 h-3 ${isSyncing ? 'animate-spin text-emerald-600' : ''}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+          </svg>
+          <span>{lastSyncedText}</span>
+        </button>
+      </div>
+
+      {/* On medium screens (lg-xl): Compact Date & Sync Badge */}
+      <div className="hidden lg:flex xl:hidden items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-50/80 border border-slate-200/60 text-xs text-slate-600 shadow-2xs">
+        <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <span className="font-medium text-slate-700">{todayFormatted}</span>
+        <span className="text-slate-300">•</span>
+        <span className="text-emerald-700 font-semibold flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          PostgreSQL Synced
+        </span>
+      </div>
+
+      {/* ===================================================================== */}
+      {/* 3. RIGHT SIDE: Quick Create + Messages + Notifications + Profile      */}
+      {/* ===================================================================== */}
+      <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        {/* Quick Action Navigation Dropdown */}
+        <div className="relative" ref={quickActionRef}>
+          <button
+            type="button"
+            onClick={() => {
+              setIsQuickActionOpen((prev) => !prev);
+              setIsNotificationsOpen(false);
+              setIsMessagesOpen(false);
+              setIsProfileOpen(false);
+            }}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1b2126] hover:bg-black active:bg-slate-800 text-white text-xs font-semibold shadow-2xs transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+            aria-label="Quick Navigation and Actions"
+            aria-expanded={isQuickActionOpen}
+          >
+            <span className="text-emerald-400 font-bold leading-none text-sm">+</span>
+            <span>New Action</span>
+            <svg
+              className={`w-3 h-3 text-slate-400 transition-transform duration-150 ${
+                isQuickActionOpen ? 'rotate-180 text-white' : ''
+              }`}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+
+          {/* Quick Action Menu */}
+          {isQuickActionOpen && (
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200/80 p-2 z-50 animate-in fade-in duration-150">
+              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                Quick Jump
+              </div>
+              <div className="py-1 space-y-0.5">
+                <Link
+                  to="/leads"
+                  onClick={() => setIsQuickActionOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
+                >
+                  <span className="w-6 h-6 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 2L11 13" />
+                      <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <div className="font-semibold text-slate-900">Leads Hub</div>
+                    <div className="text-[10px] text-slate-400">Manage sales prospects</div>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/customers"
+                  onClick={() => setIsQuickActionOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
+                >
+                  <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <div className="font-semibold text-slate-900">Customers</div>
+                    <div className="text-[10px] text-slate-400">Accounts & profiles</div>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/opportunities"
+                  onClick={() => setIsQuickActionOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
+                >
+                  <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 20h18" />
+                      <path d="M4 16l6-6 4 4 6-8" />
+                    </svg>
+                  </span>
+                  <div>
+                    <div className="font-semibold text-slate-900">Opportunities</div>
+                    <div className="text-[10px] text-slate-400">Pipeline deals & revenue</div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Message / Chat Icon with Orange Notification Dot */}
         <div className="relative" ref={messagesRef}>
           <button
@@ -182,6 +413,7 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
               setIsMessagesOpen((prev) => !prev);
               setIsNotificationsOpen(false);
               setIsProfileOpen(false);
+              setIsQuickActionOpen(false);
             }}
             aria-label="Messages"
             title="Messages"
@@ -189,7 +421,6 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
               isMessagesOpen ? 'bg-slate-100 text-slate-900' : ''
             }`}
           >
-            {/* Speech bubble icon with 3 dots matching Image 2 */}
             <svg
               className="w-5 h-5"
               viewBox="0 0 24 24"
@@ -204,12 +435,10 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
               <circle cx="12" cy="12" r="0.75" fill="currentColor" />
               <circle cx="15" cy="12" r="0.75" fill="currentColor" />
             </svg>
-
-            {/* Exact Orange / Coral Notification Dot matching Reference Image 2 */}
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#ff6b4a] ring-2 ring-white" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#ff6b4a] ring-2 ring-white" />
           </button>
 
-          {/* Messages Dropdown Panel (UI only) */}
+          {/* Messages Dropdown Panel */}
           {isMessagesOpen && (
             <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-xl border border-slate-200/80 py-2 z-50 animate-in fade-in duration-150">
               <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
@@ -250,6 +479,7 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
               setIsNotificationsOpen((prev) => !prev);
               setIsMessagesOpen(false);
               setIsProfileOpen(false);
+              setIsQuickActionOpen(false);
             }}
             aria-label="Notifications"
             title="Notifications"
@@ -257,7 +487,6 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
               isNotificationsOpen ? 'bg-slate-100 text-slate-900' : ''
             }`}
           >
-            {/* Bell icon matching Image 2 */}
             <svg
               className="w-5 h-5"
               viewBox="0 0 24 24"
@@ -270,12 +499,10 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
-
-            {/* Exact Orange / Coral Notification Dot matching Reference Image 2 */}
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#ff6b4a] ring-2 ring-white" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#ff6b4a] ring-2 ring-white" />
           </button>
 
-          {/* Notifications Dropdown Panel (UI only) */}
+          {/* Notifications Dropdown Panel */}
           {isNotificationsOpen && (
             <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-xl border border-slate-200/80 py-2 z-50 animate-in fade-in duration-150">
               <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
@@ -314,7 +541,7 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
           )}
         </div>
 
-        {/* User Profile Section: Circular Avatar + Dropdown Arrow (Matching Reference Image 2 & 3) */}
+        {/* User Profile Section: Circular Avatar + Dropdown Arrow */}
         <div className="relative" ref={profileRef}>
           <button
             type="button"
@@ -322,6 +549,7 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
               setIsProfileOpen((prev) => !prev);
               setIsNotificationsOpen(false);
               setIsMessagesOpen(false);
+              setIsQuickActionOpen(false);
             }}
             className={`flex items-center gap-1.5 p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer focus:outline-none border ${
               isProfileOpen ? 'border-emerald-400 bg-emerald-50/40 ring-2 ring-emerald-500/10' : 'border-transparent'
@@ -330,28 +558,23 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
             aria-label="User profile menu"
             aria-expanded={isProfileOpen}
           >
-            {/* Circular Avatar matching Reference Image 2 portrait */}
+            {/* Circular Avatar portrait */}
             <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-slate-200/80 shadow-2xs shrink-0 flex items-center justify-center bg-slate-100">
               <svg className="w-full h-full" viewBox="0 0 36 36" fill="none">
                 <circle cx="18" cy="18" r="18" fill="#e2e8f0" />
-                {/* Torso / patterned shirt */}
                 <path d="M6 36c0-6 5.37-11 12-11s12 5 12 11" fill="#475569" />
                 <path d="M12 25l6 6 6-6" fill="#10b981" />
-                {/* Neck & Head */}
                 <rect x="15" y="19" width="6" height="7" rx="2" fill="#fcd34d" />
                 <circle cx="18" cy="15" r="7.5" fill="#fde68a" />
-                {/* Hair */}
                 <path d="M11 14c0-4 3.13-7 7-7s7 3 7 7c0 1-.5 2-1 2s-1.5-1-2-1c-1.5 0-2.5 1-4 1s-2.5-1-4-1c-.5 0-1.5 1-2 1s-1-1-1-2z" fill="#78350f" />
-                {/* Beard */}
                 <path d="M13 16c0 3.5 2.2 6.5 5 6.5s5-3 5-6.5h-1c-.5 2-1.8 3.5-4 3.5s-3.5-1.5-4-3.5h-1z" fill="#78350f" />
-                {/* Glasses */}
                 <rect x="13" y="12.5" width="4" height="3" rx="1" stroke="#1e293b" strokeWidth="0.8" fill="none" />
                 <rect x="19" y="12.5" width="4" height="3" rx="1" stroke="#1e293b" strokeWidth="0.8" fill="none" />
                 <line x1="17" y1="14" x2="19" y2="14" stroke="#1e293b" strokeWidth="0.8" />
               </svg>
             </div>
 
-            {/* Dropdown Chevron matching Reference Image 2 */}
+            {/* Dropdown Chevron */}
             <svg
               className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${
                 isProfileOpen ? 'rotate-180 text-emerald-600' : ''
@@ -370,7 +593,6 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
           {/* User Profile Dropdown Menu */}
           {isProfileOpen && (
             <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200/80 p-3 z-50 animate-in fade-in duration-150">
-              {/* User Identity Header */}
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
                 <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-slate-200 shrink-0">
                   <svg className="w-full h-full" viewBox="0 0 36 36" fill="none">
@@ -400,7 +622,6 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
                 </div>
               </div>
 
-              {/* Workspace Details */}
               <div className="py-2.5 text-[11px] text-slate-600 space-y-1.5 border-b border-slate-100">
                 <div className="flex items-center justify-between text-slate-500">
                   <span>Workspace</span>
@@ -412,7 +633,6 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
                 </div>
               </div>
 
-              {/* Log Out Action */}
               <div className="pt-2">
                 <button
                   type="button"

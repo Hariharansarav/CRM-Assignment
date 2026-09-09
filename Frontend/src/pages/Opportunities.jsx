@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import opportunityService from '../services/opportunityService';
 import OpportunityFilters from '../components/opportunities/OpportunityFilters';
 import OpportunityTable from '../components/opportunities/OpportunityTable';
@@ -22,13 +23,23 @@ const formatCurrency = (val) => {
  * status filtering, search, inline and modal CRUD operations, and responsive design.
  */
 export const Opportunities = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSearch = searchParams.get('search') || '';
+
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Search & Filter state
-  const [search, setSearch] = useState('');
+  const [prevUrlSearch, setPrevUrlSearch] = useState(urlSearch);
+  const [search, setSearch] = useState(urlSearch);
   const [status, setStatus] = useState('all');
+
+  // Sync external search params during render
+  if (urlSearch !== prevUrlSearch) {
+    setPrevUrlSearch(urlSearch);
+    setSearch(urlSearch);
+  }
 
   // Overall pipeline statistics summary
   const [stats, setStats] = useState({
@@ -132,6 +143,11 @@ export const Opportunities = () => {
   // Handlers for search and filtering
   const handleSearchChange = (newSearch) => {
     setSearch(newSearch);
+    if (newSearch) {
+      setSearchParams({ search: newSearch }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
   };
 
   const handleStatusChange = (newStatus) => {
@@ -143,6 +159,7 @@ export const Opportunities = () => {
     setLoading(true);
     setSearch('');
     setStatus('all');
+    setSearchParams({}, { replace: true });
   };
 
   const handleRetry = () => {

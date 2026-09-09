@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import leadService from '../services/leadService';
 import LeadFilters from '../components/leads/LeadFilters';
 import LeadTable from '../components/leads/LeadTable';
@@ -13,13 +14,23 @@ import Toast from '../components/ui/Toast';
  * search & status filtering, inline and modal CRUD operations, and responsive design.
  */
 export const Leads = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSearch = searchParams.get('search') || '';
+
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Search & Filter state
-  const [search, setSearch] = useState('');
+  const [prevUrlSearch, setPrevUrlSearch] = useState(urlSearch);
+  const [search, setSearch] = useState(urlSearch);
   const [status, setStatus] = useState('all');
+
+  // Sync external search params during render
+  if (urlSearch !== prevUrlSearch) {
+    setPrevUrlSearch(urlSearch);
+    setSearch(urlSearch);
+  }
 
   // Overall lead statistics summary
   const [stats, setStats] = useState({ total: 0, new: 0, contacted: 0, qualified: 0, lost: 0 });
@@ -86,6 +97,11 @@ export const Leads = () => {
   const handleSearchChange = (newSearch) => {
     setLoading(true);
     setSearch(newSearch);
+    if (newSearch) {
+      setSearchParams({ search: newSearch }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
   };
 
   const handleStatusChange = (newStatus) => {
@@ -97,6 +113,7 @@ export const Leads = () => {
     setLoading(true);
     setSearch('');
     setStatus('all');
+    setSearchParams({}, { replace: true });
   };
 
   const handleRetry = () => {

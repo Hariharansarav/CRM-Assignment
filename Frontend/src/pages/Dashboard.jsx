@@ -63,7 +63,13 @@ const Dashboard = () => {
   // =========================================================================
   if (loading && !dashboardData) {
     return (
-      <div className="w-full max-w-7xl mx-auto space-y-4 animate-pulse select-none pb-12">
+      <div className="w-full max-w-7xl mx-auto space-y-4 animate-pulse select-none pb-12 min-w-0">
+        {/* Page Header Skeleton */}
+        <div className="space-y-1.5 py-1">
+          <div className="w-32 h-6 bg-slate-200 rounded-lg" />
+          <div className="w-64 h-3.5 bg-slate-100 rounded-md" />
+        </div>
+
         {/* 5 Compact KPI Cards Skeleton */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -156,7 +162,19 @@ const Dashboard = () => {
   // 3. FINAL COMPACT DASHBOARD MAIN VIEW
   // =========================================================================
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-4 pb-12">
+    <div className="w-full max-w-7xl mx-auto space-y-4 pb-12 min-w-0">
+      {/* Page Header */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans truncate">
+            Dashboard
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">
+            Overview of your sales performance, pipeline metrics, and recent activities.
+          </p>
+        </div>
+      </header>
+
       {/* 1. Five Compact KPI Cards */}
       <section
         aria-label="Overview Statistics"

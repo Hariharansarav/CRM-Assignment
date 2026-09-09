@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import customerService from '../services/customerService';
 import CustomerFilters from '../components/customers/CustomerFilters';
 import CustomerTable from '../components/customers/CustomerTable';
@@ -13,13 +14,23 @@ import CustomerToast from '../components/customers/CustomerToast';
  * modal dialogs for CRUD operations, and responsive status feedback.
  */
 export const Customers = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSearch = searchParams.get('search') || '';
+
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Search & Filter state
-  const [search, setSearch] = useState('');
+  const [prevUrlSearch, setPrevUrlSearch] = useState(urlSearch);
+  const [search, setSearch] = useState(urlSearch);
   const [status, setStatus] = useState('all');
+
+  // Sync external search params during render
+  if (urlSearch !== prevUrlSearch) {
+    setPrevUrlSearch(urlSearch);
+    setSearch(urlSearch);
+  }
 
   // Overall account statistics summary
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
@@ -83,6 +94,11 @@ export const Customers = () => {
   const handleSearchChange = (newSearch) => {
     setLoading(true);
     setSearch(newSearch);
+    if (newSearch) {
+      setSearchParams({ search: newSearch }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
   };
 
   const handleStatusChange = (newStatus) => {
@@ -94,6 +110,7 @@ export const Customers = () => {
     setLoading(true);
     setSearch('');
     setStatus('all');
+    setSearchParams({}, { replace: true });
   };
 
   const handleRetry = () => {
