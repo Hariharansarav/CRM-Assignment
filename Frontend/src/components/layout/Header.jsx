@@ -112,9 +112,10 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
         tag: 'Customer Profile',
         icon: (
           <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
-            <path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z" />
-            <circle cx="16" cy="14" r="1" fill="currentColor" />
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
         ),
       };
@@ -125,9 +126,10 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
         tag: 'Client Accounts',
         icon: (
           <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
-            <path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z" />
-            <circle cx="16" cy="14" r="1" fill="currentColor" />
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
         ),
       };
@@ -138,8 +140,7 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
         tag: 'Prospect Ingestion',
         icon: (
           <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 2L11 13" />
-            <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
           </svg>
         ),
       };
@@ -150,12 +151,10 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
         tag: 'Revenue Pipeline',
         icon: (
           <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 20h18" />
-            <path d="M4 16l6-6 4 4 6-8" />
-            <circle cx="4" cy="16" r="1.5" fill="currentColor" />
-            <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-            <circle cx="14" cy="14" r="1.5" fill="currentColor" />
-            <circle cx="20" cy="6" r="1.5" fill="currentColor" />
+            <line x1="18" y1="20" x2="18" y2="4" strokeWidth="2.5" />
+            <line x1="12" y1="20" x2="12" y2="10" strokeWidth="2.5" />
+            <line x1="6" y1="20" x2="6" y2="15" strokeWidth="2.5" />
+            <line x1="2" y1="20" x2="22" y2="20" />
           </svg>
         ),
       };
@@ -215,9 +214,9 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
         </button>
 
         {/* Mobile Brand Identity with Green CRM Logo (Hidden on md+) */}
-        <div className="flex md:hidden items-center gap-2 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-[#11161b] border border-slate-800 flex items-center justify-center shrink-0 p-1">
-            <img src={crmGreenLogo} alt="CRM Logo" className="w-full h-full object-contain" />
+        <div className="flex md:hidden items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-[#11161b] border border-slate-800 flex items-center justify-center shrink-0 p-1 shadow-xs">
+            <img src={crmGreenLogo} alt="CRM Logo" className="w-6 h-6 object-contain drop-shadow-[0_1px_3px_rgba(16,185,129,0.3)]" />
           </div>
           <span className="font-bold text-slate-900 text-sm tracking-tight font-sans truncate">
             Mini Sales CRM
@@ -356,10 +355,9 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
                   onClick={() => setIsQuickActionOpen(false)}
                   className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
                 >
-                  <span className="w-6 h-6 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0">
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 2L11 13" />
-                      <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+                  <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                     </svg>
                   </span>
                   <div>
@@ -373,9 +371,12 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
                   onClick={() => setIsQuickActionOpen(false)}
                   className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
                 >
-                  <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+                  <span className="w-6 h-6 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
                   </span>
                   <div>
@@ -390,9 +391,11 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
                   className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
                 >
                   <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 20h18" />
-                      <path d="M4 16l6-6 4 4 6-8" />
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="20" x2="18" y2="4" strokeWidth="2.5" />
+                      <line x1="12" y1="20" x2="12" y2="10" strokeWidth="2.5" />
+                      <line x1="6" y1="20" x2="6" y2="15" strokeWidth="2.5" />
+                      <line x1="2" y1="20" x2="22" y2="20" />
                     </svg>
                   </span>
                   <div>

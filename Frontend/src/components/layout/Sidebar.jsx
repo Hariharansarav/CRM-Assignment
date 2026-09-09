@@ -14,51 +14,49 @@ const NAV_ITEMS = [
   {
     to: '/dashboard',
     label: 'Dashboard',
-    // 4-square / 2x2 grid icon matching reference Image 1
+    // 4-quadrant layout / Dashboard overview grid
     icon: (props) => (
       <svg {...props} viewBox="0 0 24 24" fill="currentColor">
-        <rect x="3" y="3" width="7.5" height="7.5" rx="1.75" />
-        <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.75" />
-        <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.75" />
-        <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.75" />
+        <rect x="3" y="3" width="7" height="7" rx="2" />
+        <rect x="14" y="3" width="7" height="7" rx="2" />
+        <rect x="14" y="14" width="7" height="7" rx="2" />
+        <rect x="3" y="14" width="7" height="7" rx="2" />
       </svg>
     ),
   },
   {
     to: '/leads',
     label: 'Leads',
-    // Paper airplane / send icon matching reference Image 1
+    // Sales Funnel icon directly representing lead qualification & inbound prospects
     icon: (props) => (
       <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 2L11 13" />
-        <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
       </svg>
     ),
   },
   {
     to: '/customers',
     label: 'Customers',
-    // Wallet / purse icon matching reference Image 1
+    // Client Accounts / Users group icon directly representing customer relationships
     icon: (props) => (
       <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
-        <path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z" />
-        <circle cx="16" cy="14" r="1" fill="currentColor" />
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
   },
   {
     to: '/opportunities',
     label: 'Opportunities',
-    // Line chart with baseline and dots matching reference Image 1
+    // Ascending Pipeline / Growth Bar Chart directly representing revenue & deal stages
     icon: (props) => (
       <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 20h18" />
-        <path d="M4 16l6-6 4 4 6-8" />
-        <circle cx="4" cy="16" r="1.5" fill="currentColor" />
-        <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-        <circle cx="14" cy="14" r="1.5" fill="currentColor" />
-        <circle cx="20" cy="6" r="1.5" fill="currentColor" />
+        <line x1="18" y1="20" x2="18" y2="4" strokeWidth="2.5" />
+        <line x1="12" y1="20" x2="12" y2="10" strokeWidth="2.5" />
+        <line x1="6" y1="20" x2="6" y2="15" strokeWidth="2.5" />
+        <line x1="2" y1="20" x2="22" y2="20" />
       </svg>
     ),
   },
@@ -91,11 +89,11 @@ const Sidebar = ({ onClose, isMobile = false }) => {
           {/* Mobile Header: Logo & Title */}
           <div className="h-16 px-5 flex items-center justify-between border-b border-slate-800/80">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 p-1">
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800/80 flex items-center justify-center shrink-0 p-1 shadow-md shadow-emerald-950/20">
                 <img
                   src={crmGreenLogo}
                   alt="Mini Sales CRM"
-                  className="w-full h-full object-contain"
+                  className="w-7 h-7 object-contain drop-shadow-[0_2px_4px_rgba(16,185,129,0.3)]"
                 />
               </div>
               <div>
@@ -207,17 +205,17 @@ const Sidebar = ({ onClose, isMobile = false }) => {
       {/* TOP SECTION: Logo + Navigation Items */}
       <div className="flex flex-col items-center w-full">
         {/* App Logo (Top) */}
-        <div className="relative group flex items-center justify-center mb-7">
+        <div className="relative group flex items-center justify-center mb-6">
           <Link
             to="/dashboard"
             aria-label="Mini Sales CRM Dashboard"
-            className="w-10 h-10 rounded-2xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 p-1"
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-105 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 p-1 bg-slate-900/40 hover:bg-slate-900 border border-slate-800/80 shadow-md shadow-emerald-950/20"
           >
             {/* Green CRM Logo */}
             <img
               src={crmGreenLogo}
               alt="Mini Sales CRM"
-              className="w-8 h-8 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+              className="w-7 h-7 object-contain drop-shadow-[0_2px_6px_rgba(16,185,129,0.3)] transition-transform duration-200 group-hover:scale-105"
             />
           </Link>
 
