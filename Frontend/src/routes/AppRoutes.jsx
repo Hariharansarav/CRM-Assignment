@@ -1,19 +1,15 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard';
-import {
-  Customers,
-  CustomerDetails,
-  Leads,
-  Opportunities,
-} from '../pages/PlaceholderPages';
+import Customers from '../pages/Customers';
+import CustomerDetails from '../pages/CustomerDetails';
+import Leads from '../pages/Leads';
+import Opportunities from '../pages/Opportunities';
+import MainLayout from '../layouts/MainLayout';
 import ProtectedRoute from './ProtectedRoute';
 import auth from '../utils/auth';
 
-/**
- * Main application routing configuration.
- * Configures public login route and protected CRM routes.
- */
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -32,13 +28,15 @@ const AppRoutes = () => {
       {/* Public Route */}
       <Route path="/login" element={<Login />} />
 
-      {/* Protected Routes */}
+      {/* Protected CRM Routes with MainLayout */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/customers/:id" element={<CustomerDetails />} />
-        <Route path="/leads" element={<Leads />} />
-        <Route path="/opportunities" element={<Opportunities />} />
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/customers" element={<Customers />} />
+          <Route path="/customers/:id" element={<CustomerDetails />} />
+          <Route path="/leads" element={<Leads />} />
+          <Route path="/opportunities" element={<Opportunities />} />
+        </Route>
       </Route>
 
       {/* Catch-all Wildcard Route */}
