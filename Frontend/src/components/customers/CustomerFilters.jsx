@@ -89,7 +89,7 @@ export const CustomerFilters = ({
             aria-label="Filter customers by status"
             className="h-9.5 sm:h-10 pl-3 pr-8 rounded-xl bg-slate-50/80 border border-slate-200/80 text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 focus:bg-white appearance-none cursor-pointer transition-all"
           >
-            <option value="all">All Statuses</option>
+            <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
