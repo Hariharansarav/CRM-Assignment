@@ -209,25 +209,33 @@ export const Opportunities = () => {
 
   // Form submission handler (Create or Update)
   const handleFormSubmit = async (formData) => {
-    if (selectedOpportunity && selectedOpportunity.id) {
-      // Edit mode
-      await opportunityService.updateOpportunity(selectedOpportunity.id, formData);
-      setToast({ message: 'Opportunity updated successfully.', type: 'success' });
-    } else {
-      // Create mode
-      await opportunityService.createOpportunity(formData);
-      setToast({ message: 'Opportunity created successfully.', type: 'success' });
+    try {
+      if (selectedOpportunity && selectedOpportunity.id) {
+        // Edit mode
+        await opportunityService.updateOpportunity(selectedOpportunity.id, formData);
+        setToast({ message: 'Opportunity updated successfully.', type: 'success' });
+      } else {
+        // Create mode
+        await opportunityService.createOpportunity(formData);
+        setToast({ message: 'Opportunity created successfully.', type: 'success' });
+      }
+      setRefreshCount((c) => c + 1);
+      window.dispatchEvent(new CustomEvent('crm:data-updated'));
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to save opportunity.', type: 'error' });
     }
-    setRefreshCount((c) => c + 1);
-    window.dispatchEvent(new CustomEvent('crm:data-updated'));
   };
 
   // Delete confirmation handler
   const handleDeleteConfirm = async (oppId) => {
-    await opportunityService.deleteOpportunity(oppId);
-    setToast({ message: 'Opportunity deleted successfully.', type: 'success' });
-    setRefreshCount((c) => c + 1);
-    window.dispatchEvent(new CustomEvent('crm:data-updated'));
+    try {
+      await opportunityService.deleteOpportunity(oppId);
+      setToast({ message: 'Opportunity deleted successfully.', type: 'success' });
+      setRefreshCount((c) => c + 1);
+      window.dispatchEvent(new CustomEvent('crm:data-updated'));
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to delete opportunity.', type: 'error' });
+    }
   };
 
   const isFiltered = Boolean(search || status !== 'all');

@@ -147,25 +147,35 @@ export const Customers = () => {
 
   // Form submission handler (Create or Update)
   const handleFormSubmit = async (formData) => {
-    if (selectedCustomer && selectedCustomer.id) {
-      // Edit mode
-      await customerService.updateCustomer(selectedCustomer.id, formData);
-      setToast({ message: 'Customer updated successfully.', type: 'success' });
-    } else {
-      // Create mode
-      await customerService.createCustomer(formData);
-      setToast({ message: 'Customer created successfully.', type: 'success' });
+    try {
+      if (selectedCustomer && selectedCustomer.id) {
+        // Edit mode
+        await customerService.updateCustomer(selectedCustomer.id, formData);
+        setToast({ message: 'Customer updated successfully.', type: 'success' });
+      } else {
+        // Create mode
+        await customerService.createCustomer(formData);
+        setToast({ message: 'Customer created successfully.', type: 'success' });
+      }
+      // Increment refresh trigger to reload list while preserving active search & status
+      setRefreshCount((c) => c + 1);
+      window.dispatchEvent(new CustomEvent('crm:data-updated'));
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to save customer.', type: 'error' });
     }
-    // Increment refresh trigger to reload list while preserving active search & status
-    setRefreshCount((c) => c + 1);
   };
 
   // Delete confirmation handler
   const handleDeleteConfirm = async (customerId) => {
-    await customerService.deleteCustomer(customerId);
-    setToast({ message: 'Customer deleted successfully.', type: 'success' });
-    // Increment refresh trigger to reload list while preserving active search & status
-    setRefreshCount((c) => c + 1);
+    try {
+      await customerService.deleteCustomer(customerId);
+      setToast({ message: 'Customer deleted successfully.', type: 'success' });
+      // Increment refresh trigger to reload list while preserving active search & status
+      setRefreshCount((c) => c + 1);
+      window.dispatchEvent(new CustomEvent('crm:data-updated'));
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to delete customer.', type: 'error' });
+    }
   };
 
   const isFiltered = Boolean(search || status !== 'all');

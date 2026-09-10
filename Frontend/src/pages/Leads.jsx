@@ -161,25 +161,33 @@ export const Leads = () => {
 
   // Form submission handler (Create or Update)
   const handleFormSubmit = async (formData) => {
-    if (selectedLead && selectedLead.id) {
-      // Edit mode
-      await leadService.updateLead(selectedLead.id, formData);
-      setToast({ message: 'Lead updated successfully.', type: 'success' });
-    } else {
-      // Create mode
-      await leadService.createLead(formData);
-      setToast({ message: 'Lead created successfully.', type: 'success' });
+    try {
+      if (selectedLead && selectedLead.id) {
+        // Edit mode
+        await leadService.updateLead(selectedLead.id, formData);
+        setToast({ message: 'Lead updated successfully.', type: 'success' });
+      } else {
+        // Create mode
+        await leadService.createLead(formData);
+        setToast({ message: 'Lead created successfully.', type: 'success' });
+      }
+      setRefreshCount((c) => c + 1);
+      window.dispatchEvent(new CustomEvent('crm:data-updated'));
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to save lead.', type: 'error' });
     }
-    setRefreshCount((c) => c + 1);
-    window.dispatchEvent(new CustomEvent('crm:data-updated'));
   };
 
   // Delete confirmation handler
   const handleDeleteConfirm = async (leadId) => {
-    await leadService.deleteLead(leadId);
-    setToast({ message: 'Lead deleted successfully.', type: 'success' });
-    setRefreshCount((c) => c + 1);
-    window.dispatchEvent(new CustomEvent('crm:data-updated'));
+    try {
+      await leadService.deleteLead(leadId);
+      setToast({ message: 'Lead deleted successfully.', type: 'success' });
+      setRefreshCount((c) => c + 1);
+      window.dispatchEvent(new CustomEvent('crm:data-updated'));
+    } catch (err) {
+      setToast({ message: err.message || 'Failed to delete lead.', type: 'error' });
+    }
   };
 
   const isFiltered = Boolean(search || status !== 'all');
