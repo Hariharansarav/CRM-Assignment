@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import customerService from '../services/customerService';
 import CustomerFilters from '../components/customers/CustomerFilters';
@@ -47,6 +47,14 @@ export const Customers = () => {
   // Toast feedback state
   const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
 
+  // Helper to compute stats from a full customer list
+  const computeStats = (allData) => {
+    const total = (allData || []).length;
+    const active = (allData || []).filter((c) => c.status?.toLowerCase() === 'active').length;
+    const inactive = total - active;
+    return { total, active, inactive };
+  };
+
   // Main data-loading effect (synchronized with search, status, and refreshCount)
   useEffect(() => {
     let isMounted = true;
@@ -55,8 +63,13 @@ export const Customers = () => {
       try {
         const data = await customerService.getCustomers({ search, status });
         if (isMounted) {
-          setCustomers(data || []);
+          const list = data || [];
+          setCustomers(list);
           setError(null);
+          // If no filters are applied, compute stats directly from the full response (eliminates duplicate request)
+          if (!search && status === 'all') {
+            setStats(computeStats(list));
+          }
         }
       } catch (err) {
         if (isMounted) {
@@ -76,19 +89,22 @@ export const Customers = () => {
     };
   }, [search, status, refreshCount]);
 
-  // Overall stats summary loader
-  const refreshStats = useCallback(() => {
-    customerService.getCustomers().then((allData) => {
-      const total = (allData || []).length;
-      const active = (allData || []).filter((c) => c.status?.toLowerCase() === 'active').length;
-      const inactive = total - active;
-      setStats({ total, active, inactive });
-    }).catch(() => {});
-  }, []);
-
+  // Overall stats summary loader - only fetches separately if filters are active
   useEffect(() => {
-    refreshStats();
-  }, [refreshStats, refreshCount]);
+    // If no filters are active, loadData already calculated stats from the full list
+    if (!search && status === 'all') return;
+
+    let isMounted = true;
+    customerService.getCustomers().then((allData) => {
+      if (isMounted) {
+        setStats(computeStats(allData));
+      }
+    }).catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [search, status, refreshCount]);
 
   // Handlers for search and filtering
   const handleSearchChange = (newSearch) => {

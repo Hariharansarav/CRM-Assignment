@@ -105,13 +105,15 @@ CREATE TABLE activities (
 -- Indexing high-frequency filter, join, and search columns
 -- ===================================================================
 
--- Customers: fast status filtering & name/company lookup
+-- Customers: fast status filtering & name/company lookup & recent order
 CREATE INDEX idx_customers_status ON customers(status);
 CREATE INDEX idx_customers_name_company ON customers(name, company);
+CREATE INDEX idx_customers_created_at ON customers(created_at DESC);
 
--- Leads: fast status filtering & name/company lookup
+-- Leads: fast status filtering & name/company lookup & recent order
 CREATE INDEX idx_leads_status ON leads(status);
 CREATE INDEX idx_leads_name_company ON leads(name, company);
+CREATE INDEX idx_leads_created_at ON leads(created_at DESC);
 
 -- Opportunities: fast foreign key joins and pipeline status aggregations
 CREATE INDEX idx_opportunities_customer_id ON opportunities(customer_id);
@@ -119,3 +121,4 @@ CREATE INDEX idx_opportunities_status ON opportunities(status);
 
 -- Activities: fast foreign key joins and customer timeline queries
 CREATE INDEX idx_activities_customer_id ON activities(customer_id);
+

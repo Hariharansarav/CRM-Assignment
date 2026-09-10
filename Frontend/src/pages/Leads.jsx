@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import leadService from '../services/leadService';
 import LeadFilters from '../components/leads/LeadFilters';
@@ -47,6 +47,17 @@ export const Leads = () => {
   // Toast feedback state
   const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
 
+  // Helper to compute stats from a full lead list
+  const computeStats = (allData) => {
+    const all = allData || [];
+    const total = all.length;
+    const newCount = all.filter((l) => l.status === 'New').length;
+    const contacted = all.filter((l) => l.status === 'Contacted').length;
+    const qualified = all.filter((l) => l.status === 'Qualified').length;
+    const lost = all.filter((l) => l.status === 'Lost').length;
+    return { total, new: newCount, contacted, qualified, lost };
+  };
+
   // Main data-loading effect (synchronized with search, status, and refreshCount)
   useEffect(() => {
     let isMounted = true;
@@ -55,8 +66,13 @@ export const Leads = () => {
       try {
         const data = await leadService.getLeads({ search, status });
         if (isMounted) {
-          setLeads(data || []);
+          const list = data || [];
+          setLeads(list);
           setError(null);
+          // If no filters are applied, compute stats directly from the full response (eliminates duplicate request)
+          if (!search && status === 'all') {
+            setStats(computeStats(list));
+          }
         }
       } catch (err) {
         if (isMounted) {
@@ -76,22 +92,22 @@ export const Leads = () => {
     };
   }, [search, status, refreshCount]);
 
-  // Overall stats summary loader
-  const refreshStats = useCallback(() => {
-    leadService.getLeads().then((allData) => {
-      const all = allData || [];
-      const total = all.length;
-      const newCount = all.filter((l) => l.status === 'New').length;
-      const contacted = all.filter((l) => l.status === 'Contacted').length;
-      const qualified = all.filter((l) => l.status === 'Qualified').length;
-      const lost = all.filter((l) => l.status === 'Lost').length;
-      setStats({ total, new: newCount, contacted, qualified, lost });
-    }).catch(() => {});
-  }, []);
-
+  // Overall stats summary loader - only fetches separately if filters are active
   useEffect(() => {
-    refreshStats();
-  }, [refreshStats, refreshCount]);
+    // If no filters are active, loadData already calculated stats from the full list
+    if (!search && status === 'all') return;
+
+    let isMounted = true;
+    leadService.getLeads().then((allData) => {
+      if (isMounted) {
+        setStats(computeStats(allData));
+      }
+    }).catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [search, status, refreshCount]);
 
   // Handlers for search and filtering
   const handleSearchChange = (newSearch) => {

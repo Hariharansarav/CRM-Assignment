@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import opportunityService from '../services/opportunityService';
 import OpportunityFilters from '../components/opportunities/OpportunityFilters';
@@ -62,6 +62,35 @@ export const Opportunities = () => {
   // Toast feedback state
   const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
 
+  // Helper to compute pipeline statistics from a full opportunity list
+  const computeStats = (allData) => {
+    const all = allData || [];
+    const totalCount = all.length;
+    let totalValue = 0;
+    let wonValue = 0;
+    let wonCount = 0;
+    let inProgressCount = 0;
+
+    all.forEach((item) => {
+      const val = parseFloat(item.value) || 0;
+      totalValue += val;
+      if (item.status === 'Won') {
+        wonValue += val;
+        wonCount += 1;
+      } else if (item.status !== 'Lost') {
+        inProgressCount += 1;
+      }
+    });
+
+    return {
+      totalCount,
+      totalValue,
+      wonValue,
+      wonCount,
+      inProgressCount,
+    };
+  };
+
   // Main data-loading effect (synchronized with status and refreshCount)
   useEffect(() => {
     let isMounted = true;
@@ -72,8 +101,13 @@ export const Opportunities = () => {
           status: status !== 'all' ? status : undefined,
         });
         if (isMounted) {
-          setOpportunities(data || []);
+          const list = data || [];
+          setOpportunities(list);
           setError(null);
+          // If all statuses are loaded, compute stats directly from response (eliminates duplicate request)
+          if (status === 'all') {
+            setStats(computeStats(list));
+          }
         }
       } catch (err) {
         if (isMounted) {
@@ -93,40 +127,21 @@ export const Opportunities = () => {
     };
   }, [status, refreshCount]);
 
-  // Overall stats summary loader
-  const refreshStats = useCallback(() => {
-    opportunityService.getOpportunities().then((allData) => {
-      const all = allData || [];
-      const totalCount = all.length;
-      let totalValue = 0;
-      let wonValue = 0;
-      let wonCount = 0;
-      let inProgressCount = 0;
-
-      all.forEach((item) => {
-        const val = parseFloat(item.value) || 0;
-        totalValue += val;
-        if (item.status === 'Won') {
-          wonValue += val;
-          wonCount += 1;
-        } else if (item.status !== 'Lost') {
-          inProgressCount += 1;
-        }
-      });
-
-      setStats({
-        totalCount,
-        totalValue,
-        wonValue,
-        wonCount,
-        inProgressCount,
-      });
-    }).catch(() => {});
-  }, []);
-
+  // Overall stats summary loader - only fetches separately if a specific status filter is active during refresh
   useEffect(() => {
-    refreshStats();
-  }, [refreshStats, refreshCount]);
+    if (status === 'all') return;
+
+    let isMounted = true;
+    opportunityService.getOpportunities().then((allData) => {
+      if (isMounted) {
+        setStats(computeStats(allData));
+      }
+    }).catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [status, refreshCount]);
 
   // Client-side search filtering across deal name, customer name, and customer company
   const filteredOpportunities = useMemo(() => {
