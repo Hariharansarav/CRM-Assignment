@@ -52,7 +52,7 @@ export const OpportunityStatus = ({ opportunitiesByStatus }) => {
   const isEmpty = total === 0;
 
   return (
-    <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col justify-between min-w-0 w-full transition-all duration-200 hover:shadow-sm">
+    <div className="rounded-2xl bg-white border border-slate-200/90 shadow-2xs card-hover p-4 sm:p-5 flex flex-col justify-between min-w-0 w-full">
       {/* Compact Card Header */}
       <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-3 min-w-0">
         <div className="min-w-0">

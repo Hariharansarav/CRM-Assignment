@@ -1,4 +1,5 @@
 import Badge from '../ui/Badge';
+import { getAvatarColor, getInitials } from '../../utils/avatarHelper';
 
 /**
  * CustomerProfile Component
@@ -7,14 +8,8 @@ import Badge from '../ui/Badge';
 export const CustomerProfile = ({ customer }) => {
   if (!customer) return null;
 
-  // Generate 2-character initials
-  const initials = (customer.name || '')
-    .split(' ')
-    .filter(Boolean)
-    .map((w) => w[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase() || 'CU';
+  const initials = getInitials(customer.name || 'CU');
+  const avatarStyle = getAvatarColor(customer.name);
 
   // Format readable registration date
   const formattedDate = customer.created_at
@@ -26,12 +21,12 @@ export const CustomerProfile = ({ customer }) => {
     : null;
 
   return (
-    <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200/80 shadow-2xs min-w-0">
+    <div className="rounded-2xl bg-white p-5 sm:p-6 border border-slate-200/90 shadow-2xs min-w-0 card-hover">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 min-w-0">
         {/* Left: Avatar + Name + Company */}
         <div className="flex items-center gap-3.5 min-w-0">
           <div
-            className="w-12 h-12 rounded-2xl bg-[#1b2126] text-white font-bold text-base flex items-center justify-center shrink-0 shadow-sm select-none"
+            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl font-bold text-base sm:text-lg flex items-center justify-center shrink-0 border shadow-2xs select-none transition-transform hover:scale-105 ${avatarStyle}`}
             aria-hidden="true"
           >
             {initials}
@@ -41,7 +36,7 @@ export const CustomerProfile = ({ customer }) => {
               <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight font-sans truncate" title={customer.name}>
                 {customer.name}
               </h2>
-              <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+              <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200/80">
                 ID #{customer.id}
               </span>
             </div>

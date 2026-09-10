@@ -2,24 +2,24 @@ import { Link } from 'react-router-dom';
 
 const STATUS_CONFIGS = {
   Prospecting: {
-    bg: 'bg-blue-50 text-blue-700 border-blue-200/80',
-    dot: 'bg-blue-500',
+    bg: 'bg-indigo-50/90 text-indigo-700 border-indigo-200/90 shadow-2xs',
+    dot: 'bg-indigo-500 ring-2 ring-indigo-500/25',
   },
   Proposal: {
-    bg: 'bg-amber-50 text-amber-700 border-amber-200/80',
-    dot: 'bg-amber-500',
+    bg: 'bg-violet-50/90 text-violet-700 border-violet-200/90 shadow-2xs',
+    dot: 'bg-violet-500 ring-2 ring-violet-500/25',
   },
   Negotiation: {
-    bg: 'bg-purple-50 text-purple-700 border-purple-200/80',
-    dot: 'bg-purple-500',
+    bg: 'bg-amber-50/90 text-amber-800 border-amber-200/90 shadow-2xs',
+    dot: 'bg-amber-500 ring-2 ring-amber-500/25',
   },
   Won: {
-    bg: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-    dot: 'bg-emerald-500',
+    bg: 'bg-emerald-50/90 text-emerald-700 border-emerald-200/90 shadow-2xs',
+    dot: 'bg-emerald-500 ring-2 ring-emerald-500/25',
   },
   Lost: {
-    bg: 'bg-rose-50 text-rose-700 border-rose-200/80',
-    dot: 'bg-rose-500',
+    bg: 'bg-rose-50/90 text-rose-700 border-rose-200/90 shadow-2xs',
+    dot: 'bg-rose-500 ring-2 ring-rose-500/25',
   },
 };
 
@@ -135,14 +135,14 @@ export const OpportunityRow = ({
       </td>
 
       {/* 7. Row Actions (Edit, Delete) */}
-      <td className="py-3.5 px-4 sm:px-5 text-right">
+      <td className="py-3.5 px-4 sm:px-5 text-right whitespace-nowrap">
         <div className="flex items-center justify-end gap-1.5">
           <button
             type="button"
             onClick={() => onEdit(opportunity)}
             aria-label={`Edit ${opportunity.name}`}
             title="Edit Opportunity"
-            className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-600 hover:text-slate-900 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 border border-transparent hover:border-emerald-200/60 transition-all cursor-pointer"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -155,7 +155,7 @@ export const OpportunityRow = ({
             onClick={() => onDelete(opportunity)}
             aria-label={`Delete ${opportunity.name}`}
             title="Delete Opportunity"
-            className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-600 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200/60 transition-all cursor-pointer"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18" />

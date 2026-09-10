@@ -173,13 +173,18 @@ export const Customers = () => {
   return (
     <div className="w-full max-w-7xl mx-auto space-y-4 pb-12 min-w-0">
       {/* 1. Page Header & Primary Action */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 min-w-0">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans truncate">
-            Customers
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans truncate">
+              Customers
+            </h1>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              Client Accounts
+            </span>
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">
-            Manage and track your customer relationships.
+            Manage, nurture, and track long-term customer relationships.
           </p>
         </div>
 
@@ -187,42 +192,86 @@ export const Customers = () => {
         <button
           type="button"
           onClick={handleOpenAddModal}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-full bg-[#1b2126] hover:bg-black active:bg-slate-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer self-start sm:self-auto shrink-0 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+          className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-sm shadow-emerald-600/25 hover:shadow-md hover:shadow-emerald-600/30 transition-all duration-200 cursor-pointer self-start sm:self-auto shrink-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
         >
-          <span className="text-base leading-none font-bold">+</span>
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
           <span>Add Customer</span>
         </button>
       </header>
 
-      {/* 2. Customer Summary Statistics (Compact Cards) */}
+      {/* 2. Customer Summary Statistics (Executive KPI Cards) */}
       <section
         aria-label="Customer Summary Statistics"
-        className="grid grid-cols-3 gap-2.5 sm:gap-3.5"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
       >
-        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
-          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
-            Total Accounts
-          </span>
-          <div className="text-lg sm:text-xl font-bold text-slate-900 font-sans mt-0.5">
+        {/* Total Accounts */}
+        <div className="group relative rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-2xs card-hover flex flex-col justify-between overflow-hidden min-w-0">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-400/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase truncate">
+              Total Accounts
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-600 flex items-center justify-center shrink-0">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-sans tabular-nums leading-tight">
             {stats.total}
           </div>
-        </div>
-
-        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
-          <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-600 uppercase tracking-wider block truncate">
-            Active Accounts
-          </span>
-          <div className="text-lg sm:text-xl font-bold text-emerald-700 font-sans mt-0.5">
-            {stats.active}
+          <div className="text-[11px] text-slate-400 mt-1 truncate">
+            Active customer portfolio
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
-          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider block truncate">
-            Inactive
-          </span>
-          <div className="text-lg sm:text-xl font-bold text-slate-600 font-sans mt-0.5">
+        {/* Active Accounts */}
+        <div className="group relative rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-2xs card-hover flex flex-col justify-between overflow-hidden min-w-0">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-[11px] font-bold tracking-wider text-emerald-700 uppercase truncate">
+              Active Accounts
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 font-sans tabular-nums leading-tight">
+            {stats.active}
+          </div>
+          <div className="text-[11px] text-emerald-600/80 font-medium mt-1 truncate">
+            In good standing & engaged
+          </div>
+        </div>
+
+        {/* Inactive */}
+        <div className="group relative rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-2xs card-hover flex flex-col justify-between overflow-hidden min-w-0">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-400/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase truncate">
+              Inactive
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-400 flex items-center justify-center shrink-0">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-slate-600 font-sans tabular-nums leading-tight">
             {stats.inactive}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-1 truncate">
+            Dormant or archived
           </div>
         </div>
       </section>

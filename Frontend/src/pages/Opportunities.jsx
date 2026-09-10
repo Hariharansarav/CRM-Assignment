@@ -198,6 +198,7 @@ export const Opportunities = () => {
       await opportunityService.updateOpportunity(oppId, { status: newStatus });
       setToast({ message: `Opportunity stage updated to ${newStatus}.`, type: 'success' });
       setRefreshCount((c) => c + 1);
+      window.dispatchEvent(new CustomEvent('crm:data-updated'));
     } catch (err) {
       setToast({
         message: err.message || 'Failed to update opportunity stage.',
@@ -218,6 +219,7 @@ export const Opportunities = () => {
       setToast({ message: 'Opportunity created successfully.', type: 'success' });
     }
     setRefreshCount((c) => c + 1);
+    window.dispatchEvent(new CustomEvent('crm:data-updated'));
   };
 
   // Delete confirmation handler
@@ -225,6 +227,7 @@ export const Opportunities = () => {
     await opportunityService.deleteOpportunity(oppId);
     setToast({ message: 'Opportunity deleted successfully.', type: 'success' });
     setRefreshCount((c) => c + 1);
+    window.dispatchEvent(new CustomEvent('crm:data-updated'));
   };
 
   const isFiltered = Boolean(search || status !== 'all');
@@ -232,13 +235,18 @@ export const Opportunities = () => {
   return (
     <div className="w-full max-w-7xl mx-auto space-y-4 pb-12 min-w-0">
       {/* 1. Page Header & Primary Action */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 min-w-0">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans truncate">
-            Opportunities
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans truncate">
+              Opportunities
+            </h1>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              Revenue Pipeline
+            </span>
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 truncate">
-            Track and forecast your active sales deals and revenue stages.
+            Track, stage-manage, and forecast your active sales deals.
           </p>
         </div>
 
@@ -246,65 +254,115 @@ export const Opportunities = () => {
         <button
           type="button"
           onClick={handleOpenAddModal}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-full bg-[#1b2126] hover:bg-black active:bg-slate-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition-all cursor-pointer self-start sm:self-auto shrink-0 focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+          className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-sm shadow-emerald-600/25 hover:shadow-md hover:shadow-emerald-600/30 transition-all duration-200 cursor-pointer self-start sm:self-auto shrink-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
         >
-          <span className="text-base leading-none font-bold">+</span>
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
           <span>Add Opportunity</span>
         </button>
       </header>
 
-      {/* 2. Pipeline Summary Statistics (Compact KPI Cards) */}
+      {/* 2. Pipeline Summary Statistics (Executive KPI Cards) */}
       <section
         aria-label="Pipeline Summary Statistics"
-        className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4"
       >
-        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
-          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
-            Pipeline Value
-          </span>
-          <div className="text-lg sm:text-xl font-bold text-slate-900 font-mono mt-0.5 truncate">
+        {/* Pipeline Value */}
+        <div className="group relative rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-2xs card-hover flex flex-col justify-between overflow-hidden min-w-0">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase truncate">
+              Pipeline Value
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 flex items-center justify-center shrink-0">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight tabular-nums leading-tight">
             {formatCurrency(stats.totalValue)}
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">
-            {stats.totalCount} total deals
+          <div className="text-[11px] text-slate-400 mt-1 truncate">
+            {stats.totalCount} active pipeline deals
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
-          <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-600 uppercase tracking-wider block truncate">
-            Closed Won Value
-          </span>
-          <div className="text-lg sm:text-xl font-bold text-emerald-700 font-mono mt-0.5 truncate">
+        {/* Closed Won Value */}
+        <div className="group relative rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-2xs card-hover flex flex-col justify-between overflow-hidden min-w-0">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-[11px] font-bold tracking-wider text-emerald-700 uppercase truncate">
+              Closed Won Value
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 font-mono tracking-tight tabular-nums leading-tight">
             {formatCurrency(stats.wonValue)}
           </div>
-          <div className="text-[10px] text-emerald-600 font-medium mt-0.5">
-            {stats.wonCount} won deals
+          <div className="text-[11px] text-emerald-600/80 font-medium mt-1 truncate">
+            {stats.wonCount} won contracts
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
-          <span className="text-[10px] sm:text-[11px] font-semibold text-blue-600 uppercase tracking-wider block truncate">
-            Active Deals
-          </span>
-          <div className="text-lg sm:text-xl font-bold text-blue-700 font-sans mt-0.5">
+        {/* Active Deals */}
+        <div className="group relative rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-2xs card-hover flex flex-col justify-between overflow-hidden min-w-0">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-[11px] font-bold tracking-wider text-blue-700 uppercase truncate">
+              Active Deals
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center shrink-0">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="4" />
+                <line x1="12" y1="20" x2="12" y2="10" />
+                <line x1="6" y1="20" x2="6" y2="15" />
+                <line x1="2" y1="20" x2="22" y2="20" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-blue-700 font-sans tabular-nums leading-tight">
             {stats.inProgressCount}
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">
+          <div className="text-[11px] text-blue-600/80 font-medium mt-1 truncate">
             Prospecting / In Progress
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-3 sm:p-3.5 border border-slate-200/80 shadow-2xs min-w-0">
-          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
-            Win Rate
-          </span>
-          <div className="text-lg sm:text-xl font-bold text-slate-900 font-sans mt-0.5">
+        {/* Win Rate */}
+        <div className="group relative rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-2xs card-hover flex flex-col justify-between overflow-hidden min-w-0">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-teal-500/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-[11px] font-bold tracking-wider text-teal-700 uppercase truncate">
+              Win Rate
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-600 flex items-center justify-center shrink-0">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="m16 12-4-4-4 4" />
+                <path d="M12 16V8" />
+              </svg>
+            </div>
+          </div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-teal-700 font-sans tabular-nums leading-tight">
             {stats.totalCount > 0
               ? `${Math.round((stats.wonCount / stats.totalCount) * 100)}%`
               : '0%'}
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">
-            Conversion ratio
+          <div className="text-[11px] text-teal-600/80 font-medium mt-1 truncate">
+            Pipeline conversion ratio
           </div>
         </div>
       </section>

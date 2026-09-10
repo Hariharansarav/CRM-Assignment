@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
+import { getAvatarColor, getInitials } from '../../utils/avatarHelper';
 
 /**
  * LatestLeads Component
@@ -41,7 +42,7 @@ export const LatestLeads = ({ leads = [] }) => {
   };
 
   return (
-    <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col justify-between min-w-0 w-full h-full transition-all duration-200 hover:shadow-sm">
+    <div className="rounded-2xl bg-white border border-slate-200/90 shadow-2xs card-hover p-4 sm:p-5 flex flex-col justify-between min-w-0 w-full h-full">
       {/* Header */}
       <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-2.5 min-w-0">
         <div className="min-w-0">
@@ -72,8 +73,7 @@ export const LatestLeads = ({ leads = [] }) => {
           <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 mb-2">
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
+              <path d="M12 8v4l3 3" />
             </svg>
           </div>
           <p className="text-xs font-semibold text-slate-700">No recent leads</p>
@@ -82,27 +82,21 @@ export const LatestLeads = ({ leads = [] }) => {
       ) : (
         <div className="space-y-1.5 py-0.5 min-w-0">
           {leads.map((lead, idx) => {
-            const initials = lead.name
-              ? lead.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .substring(0, 2)
-                  .toUpperCase()
-              : 'L';
+            const initials = getInitials(lead.name || 'L');
+            const avatarStyle = getAvatarColor(lead.name);
 
             return (
               <div
                 key={lead.id || idx}
-                className="flex items-center justify-between gap-2.5 p-1 rounded-xl hover:bg-slate-50/80 transition-colors min-w-0"
+                className="flex items-center justify-between gap-2.5 p-1 rounded-xl hover:bg-slate-50/80 transition-colors min-w-0 group"
               >
                 {/* Avatar + Lead Name + Company */}
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-teal-50 text-teal-700 font-bold text-[10px] flex items-center justify-center shrink-0 border border-teal-200/60 shadow-2xs">
+                  <div className={`w-7 h-7 rounded-xl font-bold text-[10px] flex items-center justify-center shrink-0 border shadow-2xs group-hover:scale-105 transition-transform select-none ${avatarStyle}`}>
                     {initials}
                   </div>
                   <div className="min-w-0">
-                    <span className="font-semibold text-slate-900 text-xs truncate block leading-tight">
+                    <span className="font-semibold text-slate-900 text-xs truncate block leading-tight group-hover:text-emerald-700 transition-colors">
                       {lead.name || 'Unnamed Lead'}
                     </span>
                     <span className="text-[11px] text-slate-500 truncate block leading-tight mt-0.5">

@@ -70,7 +70,7 @@ export const SalesOverview = ({ chartData, stats }) => {
   }).format(totalWonRevenue);
 
   return (
-    <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col justify-between min-w-0 w-full overflow-hidden transition-all duration-200 hover:shadow-sm">
+    <div className="rounded-2xl bg-white border border-slate-200/90 shadow-2xs card-hover p-4 sm:p-5 flex flex-col justify-between min-w-0 w-full overflow-hidden">
       {/* Header Row: Title, Subtitle, and Timeframe Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100 min-w-0">
         <div className="min-w-0">

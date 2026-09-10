@@ -54,6 +54,16 @@ export async function getTotalRevenue() {
 }
 
 /**
+ * Get total pipeline value of open/active opportunities (excludes 'Won' and 'Lost')
+ * @returns {Promise<number>}
+ */
+export async function getPipelineValue() {
+  const query = "SELECT COALESCE(SUM(value), 0)::numeric AS pipeline_value FROM opportunities WHERE status NOT IN ('Won', 'Lost');";
+  const result = await pool.query(query);
+  return Number(result.rows[0]?.pipeline_value || 0);
+}
+
+/**
  * Get recently added customers
  * @param {number} limit 
  * @returns {Promise<Array>}
@@ -121,6 +131,7 @@ export const dashboardRepository = {
   getOpenOpportunities,
   getWonOpportunities,
   getTotalRevenue,
+  getPipelineValue,
   getRecentCustomers,
   getRecentLeads,
   getOpportunitiesByStatus,

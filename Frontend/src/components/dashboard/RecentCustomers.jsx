@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
+import { getAvatarColor, getInitials } from '../../utils/avatarHelper';
 
 /**
  * RecentCustomers Component
@@ -26,7 +27,7 @@ export const RecentCustomers = ({ customers = [] }) => {
   const hasCustomers = Array.isArray(customers) && customers.length > 0;
 
   return (
-    <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col justify-between min-w-0 w-full h-full transition-all duration-200 hover:shadow-sm">
+    <div className="rounded-2xl bg-white border border-slate-200/90 shadow-2xs card-hover p-4 sm:p-5 flex flex-col justify-between min-w-0 w-full h-full">
       {/* Header */}
       <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-2.5 min-w-0">
         <div className="min-w-0">
@@ -77,14 +78,8 @@ export const RecentCustomers = ({ customers = [] }) => {
             </thead>
             <tbody className="divide-y divide-slate-100/80 text-xs">
               {customers.map((cust) => {
-                const initials = cust.name
-                  ? cust.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')
-                      .substring(0, 2)
-                      .toUpperCase()
-                  : 'C';
+                const initials = getInitials(cust.name || 'C');
+                const avatarStyle = getAvatarColor(cust.name);
 
                 return (
                   <tr key={cust.id} className="hover:bg-slate-50/80 transition-colors group">
@@ -94,7 +89,7 @@ export const RecentCustomers = ({ customers = [] }) => {
                         to={`/customers/${cust.id}`}
                         className="flex items-center gap-2 min-w-0"
                       >
-                        <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-[9px] flex items-center justify-center shrink-0 border border-emerald-200/60 shadow-2xs group-hover:scale-105 transition-transform">
+                        <div className={`w-6 h-6 rounded-lg font-bold text-[9px] flex items-center justify-center shrink-0 border shadow-2xs group-hover:scale-105 transition-transform select-none ${avatarStyle}`}>
                           {initials}
                         </div>
                         <div className="min-w-0">

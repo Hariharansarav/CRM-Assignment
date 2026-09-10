@@ -1,16 +1,12 @@
+import { getAvatarColor, getInitials } from '../../utils/avatarHelper';
+
 /**
  * LeadRow Component
  * Renders a single lead row with initials avatar, source, quick status selector, and Edit/Delete actions.
  */
 export const LeadRow = ({ lead, onEdit, onDelete, onStatusChange }) => {
-  // Initials for avatar
-  const initials = (lead.name || '')
-    .split(' ')
-    .filter(Boolean)
-    .map((word) => word[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase() || 'LD';
+  const initials = getInitials(lead.name || 'LD');
+  const avatarStyle = getAvatarColor(lead.name);
 
   // Format creation date
   const formattedDate = lead.created_at
@@ -22,19 +18,19 @@ export const LeadRow = ({ lead, onEdit, onDelete, onStatusChange }) => {
     : '—';
 
   return (
-    <tr className="hover:bg-slate-50/70 transition-colors group">
+    <tr className="hover:bg-slate-50/80 transition-colors group">
       {/* 1. Lead Name + Initials Avatar */}
       <td className="py-3 px-4 sm:px-5">
         <div className="flex items-center gap-3 min-w-0">
           <div
-            className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 select-none group-hover:bg-indigo-50 group-hover:text-indigo-700 group-hover:border-indigo-200/70 transition-colors"
+            className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 border shadow-2xs select-none transition-transform group-hover:scale-105 ${avatarStyle}`}
             aria-hidden="true"
           >
             {initials}
           </div>
           <div className="min-w-0">
             <span
-              className="font-semibold text-slate-900 text-xs sm:text-sm block truncate"
+              className="font-semibold text-slate-900 text-xs sm:text-sm block truncate group-hover:text-slate-950 transition-colors"
               title={lead.name}
             >
               {lead.name}

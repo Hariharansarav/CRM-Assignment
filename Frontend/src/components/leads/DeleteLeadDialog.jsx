@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 
-/**
- * DeleteLeadDialog Component
- * Confirmation dialog for safely deleting a lead record.
- */
+
 export const DeleteLeadDialog = ({
   isOpen = false,
   lead = null,

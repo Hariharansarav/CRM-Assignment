@@ -1,19 +1,14 @@
 import { Link } from 'react-router-dom';
 import Badge from '../ui/Badge';
+import { getAvatarColor, getInitials } from '../../utils/avatarHelper';
 
 /**
  * CustomerRow Component
  * Renders a single customer row inside CustomerTable.
  */
 export const CustomerRow = ({ customer, onEdit, onDelete }) => {
-  // Generate initials for avatar (e.g., "Alex Rivera" -> "AR")
-  const initials = (customer.name || '')
-    .split(' ')
-    .filter(Boolean)
-    .map((word) => word[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase() || 'CU';
+  const initials = getInitials(customer.name || 'CU');
+  const avatarStyle = getAvatarColor(customer.name);
 
   // Format creation date (e.g., "Jun 10, 2026")
   const formattedDate = customer.created_at
@@ -25,12 +20,12 @@ export const CustomerRow = ({ customer, onEdit, onDelete }) => {
     : '—';
 
   return (
-    <tr className="hover:bg-slate-50/70 transition-colors group">
+    <tr className="hover:bg-slate-50/80 transition-colors group">
       {/* 1. Customer Name + Initials Avatar */}
       <td className="py-3 px-4 sm:px-5">
         <div className="flex items-center gap-3 min-w-0">
           <div
-            className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 select-none group-hover:bg-emerald-50 group-hover:text-emerald-700 group-hover:border-emerald-200/70 transition-colors"
+            className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 border shadow-2xs select-none transition-transform group-hover:scale-105 ${avatarStyle}`}
             aria-hidden="true"
           >
             {initials}
@@ -97,7 +92,7 @@ export const CustomerRow = ({ customer, onEdit, onDelete }) => {
             to={`/customers/${customer.id}`}
             title="View customer details"
             aria-label={`View details for ${customer.name}`}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-50 border border-transparent hover:border-sky-200/60 transition-all cursor-pointer"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
@@ -111,7 +106,7 @@ export const CustomerRow = ({ customer, onEdit, onDelete }) => {
             onClick={() => onEdit(customer)}
             title="Edit customer"
             aria-label={`Edit ${customer.name}`}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 border border-transparent hover:border-emerald-200/60 transition-all cursor-pointer"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -125,7 +120,7 @@ export const CustomerRow = ({ customer, onEdit, onDelete }) => {
             onClick={() => onDelete(customer)}
             title="Delete customer"
             aria-label={`Delete ${customer.name}`}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200/60 transition-all cursor-pointer"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18" />
