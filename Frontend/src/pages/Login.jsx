@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import LoginForm from '../components/login/LoginForm';
 import CrmDashboardMockup from '../components/login/CrmDashboardMockup';
-import auth from '../utils/auth';
 
 /**
  * Login Page Component - Full-Page Fixed Layout for Mini Sales CRM
@@ -14,7 +13,6 @@ import auth from '../utils/auth';
  */
 const Login = () => {
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Redirect to dashboard if user is already authenticated
   useEffect(() => {

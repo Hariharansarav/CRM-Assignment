@@ -3,6 +3,92 @@
 
 <head>
   <meta charset="UTF-8" />
+  <script>
+    // Suppress external browser extension noise and Chrome DevTools internal instrumentation bugs (e.g. soft navigation reportAllChanges startTime TypeError)
+    (function () {
+      function shouldSuppress(msg, stack) {
+        var str = (msg || '') + ' ' + (stack || '');
+        return (
+          str.includes('message channel closed before a response was received') ||
+          str.includes("Cannot read properties of undefined (reading 'startTime')") ||
+          str.includes("reading 'startTime'") ||
+          str.includes('reportAllChanges') ||
+          str.includes('Extension context invalidated') ||
+          str.includes('ObjectMultiplex') ||
+          str.includes('app-init-liveness') ||
+          str.includes('background-liveness')
+        );
+      }
+
+      window.addEventListener(
+        'error',
+        function (event) {
+          var msg = event.message || (event.error && event.error.message) || '';
+          var stack = (event.error && event.error.stack) || '';
+          if (shouldSuppress(msg, stack)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return true;
+          }
+        },
+        true
+      );
+
+      window.addEventListener(
+        'unhandledrejection',
+        function (event) {
+          var reason = event.reason;
+          var msg = typeof reason === 'string' ? reason : (reason && reason.message) || '';
+          var stack = (reason && reason.stack) || '';
+          if (shouldSuppress(msg, stack)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        },
+        true
+      );
+
+      var originalError = console.error;
+      console.error = function () {
+        var args = Array.prototype.slice.call(arguments);
+        var combined = args
+          .map(function (a) {
+            if (typeof a === 'string') return a;
+            if (a instanceof Error) return a.message + ' ' + (a.stack || '');
+            return (a && (a.message || a.stack)) || '';
+          })
+          .join(' ');
+
+        if (shouldSuppress(combined, '')) {
+          return;
+        }
+        originalError.apply(console, args);
+      };
+
+      var originalWarn = console.warn;
+      console.warn = function () {
+        var args = Array.prototype.slice.call(arguments);
+        var combined = args
+          .map(function (a) {
+            if (typeof a === 'string') return a;
+            if (a instanceof Error) return a.message + ' ' + (a.stack || '');
+            return (a && (a.message || a.stack)) || '';
+          })
+          .join(' ');
+
+        if (
+          combined.includes('MaxListenersExceededWarning') ||
+          combined.includes('ObjectMultiplex') ||
+          combined.includes('app-init-liveness') ||
+          combined.includes('background-liveness') ||
+          combined.includes('contentscript.js')
+        ) {
+          return;
+        }
+        originalWarn.apply(console, args);
+      };
+    })();
+  </script>
   <link rel="icon" type="image/svg+xml" href="/src/assets/CRM.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini Sales CRM</title>
