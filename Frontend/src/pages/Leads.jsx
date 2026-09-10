@@ -54,20 +54,31 @@ export const Leads = () => {
     return { total, new: newCount, contacted, qualified, lost };
   };
 
-  // Main data-loading effect (synchronized with search, status, and refreshCount)
+  // Unified data & stats loader
   useEffect(() => {
     let isMounted = true;
 
     const loadData = async () => {
       try {
-        const data = await leadService.getLeads({ search, status });
-        if (isMounted) {
-          const list = data || [];
-          setLeads(list);
-          setError(null);
-          // If no filters are applied, compute stats directly from the full response (eliminates duplicate request)
-          if (!search && status === 'all') {
+        if (!search && status === 'all') {
+          // Single call loads both table data and lead summary stats
+          const data = await leadService.getLeads();
+          if (isMounted) {
+            const list = data || [];
+            setLeads(list);
             setStats(computeStats(list));
+            setError(null);
+          }
+        } else {
+          // Fetch filtered table list and complete lead stats in parallel
+          const [filteredData, allData] = await Promise.all([
+            leadService.getLeads({ search, status }),
+            leadService.getLeads(),
+          ]);
+          if (isMounted) {
+            setLeads(filteredData || []);
+            setStats(computeStats(allData || []));
+            setError(null);
           }
         }
       } catch (err) {
@@ -82,23 +93,6 @@ export const Leads = () => {
     };
 
     loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [search, status, refreshCount]);
-
-  // Overall stats summary loader - only fetches separately if filters are active
-  useEffect(() => {
-    // If no filters are active, loadData already calculated stats from the full list
-    if (!search && status === 'all') return;
-
-    let isMounted = true;
-    leadService.getLeads().then((allData) => {
-      if (isMounted) {
-        setStats(computeStats(allData));
-      }
-    }).catch(() => { });
 
     return () => {
       isMounted = false;

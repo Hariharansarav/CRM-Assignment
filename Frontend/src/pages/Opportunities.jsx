@@ -91,22 +91,31 @@ export const Opportunities = () => {
     };
   };
 
-  // Main data-loading effect (synchronized with status and refreshCount)
+  // Unified data & pipeline stats loader
   useEffect(() => {
     let isMounted = true;
 
     const loadData = async () => {
       try {
-        const data = await opportunityService.getOpportunities({
-          status: status !== 'all' ? status : undefined,
-        });
-        if (isMounted) {
-          const list = data || [];
-          setOpportunities(list);
-          setError(null);
-          // If all statuses are loaded, compute stats directly from response (eliminates duplicate request)
-          if (status === 'all') {
+        if (status === 'all') {
+          // Single call loads both table data and pipeline summary stats
+          const data = await opportunityService.getOpportunities();
+          if (isMounted) {
+            const list = data || [];
+            setOpportunities(list);
             setStats(computeStats(list));
+            setError(null);
+          }
+        } else {
+          // Fetch filtered table list and complete pipeline stats in parallel
+          const [filteredData, allData] = await Promise.all([
+            opportunityService.getOpportunities({ status }),
+            opportunityService.getOpportunities(),
+          ]);
+          if (isMounted) {
+            setOpportunities(filteredData || []);
+            setStats(computeStats(allData || []));
+            setError(null);
           }
         }
       } catch (err) {
@@ -121,22 +130,6 @@ export const Opportunities = () => {
     };
 
     loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [status, refreshCount]);
-
-  // Overall stats summary loader - only fetches separately if a specific status filter is active during refresh
-  useEffect(() => {
-    if (status === 'all') return;
-
-    let isMounted = true;
-    opportunityService.getOpportunities().then((allData) => {
-      if (isMounted) {
-        setStats(computeStats(allData));
-      }
-    }).catch(() => {});
 
     return () => {
       isMounted = false;

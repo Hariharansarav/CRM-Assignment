@@ -55,20 +55,31 @@ export const Customers = () => {
     return { total, active, inactive };
   };
 
-  // Main data-loading effect (synchronized with search, status, and refreshCount)
+  // Unified data & stats loader
   useEffect(() => {
     let isMounted = true;
 
     const loadData = async () => {
       try {
-        const data = await customerService.getCustomers({ search, status });
-        if (isMounted) {
-          const list = data || [];
-          setCustomers(list);
-          setError(null);
-          // If no filters are applied, compute stats directly from the full response (eliminates duplicate request)
-          if (!search && status === 'all') {
+        if (!search && status === 'all') {
+          // Single call loads both table data and customer summary stats
+          const data = await customerService.getCustomers();
+          if (isMounted) {
+            const list = data || [];
+            setCustomers(list);
             setStats(computeStats(list));
+            setError(null);
+          }
+        } else {
+          // Fetch filtered table list and complete customer stats in parallel
+          const [filteredData, allData] = await Promise.all([
+            customerService.getCustomers({ search, status }),
+            customerService.getCustomers(),
+          ]);
+          if (isMounted) {
+            setCustomers(filteredData || []);
+            setStats(computeStats(allData || []));
+            setError(null);
           }
         }
       } catch (err) {
@@ -83,23 +94,6 @@ export const Customers = () => {
     };
 
     loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [search, status, refreshCount]);
-
-  // Overall stats summary loader - only fetches separately if filters are active
-  useEffect(() => {
-    // If no filters are active, loadData already calculated stats from the full list
-    if (!search && status === 'all') return;
-
-    let isMounted = true;
-    customerService.getCustomers().then((allData) => {
-      if (isMounted) {
-        setStats(computeStats(allData));
-      }
-    }).catch(() => {});
 
     return () => {
       isMounted = false;
