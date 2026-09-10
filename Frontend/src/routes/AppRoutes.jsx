@@ -5,17 +5,20 @@ import Customers from '../pages/Customers';
 import CustomerDetails from '../pages/CustomerDetails';
 import Leads from '../pages/Leads';
 import Opportunities from '../pages/Opportunities';
+import NotFound from '../pages/NotFound';
 import MainLayout from '../layouts/MainLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 const AppRoutes = () => {
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
   return (
     <Routes>
       {/* Root Route: Redirects based on auth status */}
       <Route
         path="/"
         element={
-          localStorage.getItem('isAuthenticated') === 'true' ? (
+          isAuthenticated ? (
             <Navigate to="/dashboard" replace />
           ) : (
             <Navigate to="/login" replace />
@@ -27,7 +30,7 @@ const AppRoutes = () => {
       <Route
         path="/login"
         element={
-          localStorage.getItem('isAuthenticated') === 'true' ? (
+          isAuthenticated ? (
             <Navigate to="/dashboard" replace />
           ) : (
             <Login />
@@ -43,20 +46,13 @@ const AppRoutes = () => {
           <Route path="/customers/:id" element={<CustomerDetails />} />
           <Route path="/leads" element={<Leads />} />
           <Route path="/opportunities" element={<Opportunities />} />
+          {/* Authenticated 404 Route inside MainLayout */}
+          {isAuthenticated && <Route path="*" element={<NotFound />} />}
         </Route>
       </Route>
 
-      {/* Catch-all Wildcard Route */}
-      <Route
-        path="*"
-        element={
-          localStorage.getItem('isAuthenticated') === 'true' ? (
-            <Navigate to="/dashboard" replace />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
+      {/* Catch-all Wildcard Route for unauthenticated or standalone 404 */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
