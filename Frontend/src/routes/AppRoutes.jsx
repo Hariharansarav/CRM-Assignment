@@ -6,9 +6,7 @@ import CustomerDetails from '../pages/CustomerDetails';
 import Leads from '../pages/Leads';
 import Opportunities from '../pages/Opportunities';
 import MainLayout from '../layouts/MainLayout';
-import ProtectedRoute from './ProtectedRoute';
-import auth from '../utils/auth';
-
+import ProtectedRoute from '../components/ProtectedRoute';
 
 const AppRoutes = () => {
   return (
@@ -17,7 +15,7 @@ const AppRoutes = () => {
       <Route
         path="/"
         element={
-          auth.isAuthenticated() ? (
+          localStorage.getItem('isAuthenticated') === 'true' ? (
             <Navigate to="/dashboard" replace />
           ) : (
             <Navigate to="/login" replace />
@@ -26,7 +24,16 @@ const AppRoutes = () => {
       />
 
       {/* Public Route */}
-      <Route path="/login" element={<Login />} />
+      <Route
+        path="/login"
+        element={
+          localStorage.getItem('isAuthenticated') === 'true' ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Login />
+          )
+        }
+      />
 
       {/* Protected CRM Routes with MainLayout */}
       <Route element={<ProtectedRoute />}>
@@ -43,7 +50,7 @@ const AppRoutes = () => {
       <Route
         path="*"
         element={
-          auth.isAuthenticated() ? (
+          localStorage.getItem('isAuthenticated') === 'true' ? (
             <Navigate to="/dashboard" replace />
           ) : (
             <Navigate to="/login" replace />

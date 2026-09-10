@@ -18,15 +18,13 @@ const Login = () => {
 
   // Redirect to dashboard if user is already authenticated
   useEffect(() => {
-    if (auth.isAuthenticated()) {
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+    if (localStorage.getItem('isAuthenticated') === 'true') {
+      navigate('/dashboard', { replace: true });
     }
-  }, [navigate, location]);
+  }, [navigate]);
 
   const handleLoginSuccess = () => {
-    const from = location.state?.from?.pathname || '/dashboard';
-    navigate(from, { replace: true });
+    navigate('/dashboard', { replace: true });
   };
 
   return (

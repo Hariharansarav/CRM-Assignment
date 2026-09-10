@@ -129,6 +129,7 @@ const Header = ({ onToggleMobileMenu, isMobileMenuOpen }) => {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
     auth.logout();
     navigate('/login', { replace: true });
   };

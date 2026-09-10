@@ -67,6 +67,7 @@ const Sidebar = ({ onClose, isMobile = false }) => {
   const location = useLocation();
 
   const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
     auth.logout();
     if (onClose) onClose();
     navigate('/login', { replace: true });

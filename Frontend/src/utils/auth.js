@@ -40,6 +40,7 @@ export const auth = {
       };
 
       try {
+        localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sessionData));
       } catch (err) {
         console.error('Failed to save auth session to localStorage', err);
@@ -62,6 +63,7 @@ export const auth = {
    */
   logout: () => {
     try {
+      localStorage.removeItem('isAuthenticated');
       localStorage.removeItem(AUTH_STORAGE_KEY);
     } catch (err) {
       console.error('Failed to clear auth session from localStorage', err);
@@ -74,10 +76,7 @@ export const auth = {
    */
   isAuthenticated: () => {
     try {
-      const session = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (!session) return false;
-      const parsed = JSON.parse(session);
-      return Boolean(parsed?.isLoggedIn);
+      return localStorage.getItem('isAuthenticated') === 'true';
     } catch {
       return false;
     }

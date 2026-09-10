@@ -98,6 +98,7 @@ const LoginForm = ({ onSuccess }) => {
       const result = await auth.login(username, password);
 
       if (result.success) {
+        localStorage.setItem('isAuthenticated', 'true');
         // Save or remove remembered username based on checkbox
         try {
           if (rememberMe) {
