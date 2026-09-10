@@ -8,11 +8,7 @@ import LeadForm from '../components/leads/LeadForm';
 import DeleteLeadDialog from '../components/leads/DeleteLeadDialog';
 import Toast from '../components/ui/Toast';
 
-/**
- * Leads Page (Phase 7)
- * Complete sales lead management with real backend API integration,
- * search & status filtering, inline and modal CRUD operations, and responsive design.
- */
+
 export const Leads = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearch = searchParams.get('search') || '';
@@ -102,7 +98,7 @@ export const Leads = () => {
       if (isMounted) {
         setStats(computeStats(allData));
       }
-    }).catch(() => {});
+    }).catch(() => { });
 
     return () => {
       isMounted = false;
